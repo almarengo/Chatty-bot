@@ -115,11 +115,11 @@ def Read_data(dataset,  glove_file_path, small):
     questions = Input_lang('questions', glove_word2idx)
     answers = Output_lang('answers')
     
-    return questions, answers, pairs
+    return questions, answers, pairs, glove_vectors
 
 
 def prepare_data(dataset, glove_file_path, small=True):
-    q, a, pairs = Read_data(dataset, glove_file_path, small)
+    q, a, pairs, word_vector = Read_data(dataset, glove_file_path, small)
     print(f'Read {len(pairs)} sentence pairs')
     print('Counting words')
     for pair in pairs:
@@ -130,4 +130,4 @@ def prepare_data(dataset, glove_file_path, small=True):
     print(f'In {q.name}: {q.n_words} words')
     print(f'In {a.name}: {a.n_words} words')
     
-    return q, a, pairs
+    return q, a, pairs, word_vector
