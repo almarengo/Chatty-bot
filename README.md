@@ -30,14 +30,14 @@ Input -->
 
 Output --> 
 
-	attn_weights (B x T)
+	attn_weights (B x 1 x T)
 
 ***************************************************************************************************************************************************************************************************************************************************
 **DECODER**
 
 Input --> 
 	
-	Decoder_input (B x 1 x N_out)
+	Decoder_input (B x 1)
 	Last_hidden (B x 1 x H)
 
 Embedding --> 
@@ -46,8 +46,7 @@ Embedding -->
 
 Context -->
 
-	attn_weights x Encoder_outputs (B x 1 x N_out)	
-
+	attn_weights x Encoder_outputs (B x 1 x H)	
 
 
 Output --> B x N_out

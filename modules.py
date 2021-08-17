@@ -60,7 +60,7 @@ class Decoder(nn.Module):
         self.dropout = nn.Dropout(dropout, inplace=True)
         self.attention = Attention(hidden_size)
         self.gru = nn.GRU(hidden_size+embed_size, hidden_size, dropout=dropout)
-        self.out = nn.Linear(hidden_size*2, hidden_size)
+        self.out = nn.Linear(hidden_size*2, output_size)
         
     
     def forward(self, input, last_hidden, encoder_outputs):
