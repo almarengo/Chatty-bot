@@ -8,9 +8,12 @@ class Input_lang:
     
     def __init__(self, name, word2index):
         self.name = name
+        # Create dict of word: 1 (count) for the words in the GloVe vocabulary
         self.word_count = {word: 1 for word in word2index.keys()}
+        # Import the word: index created from load glove embbedding
         self.word2index = word2index
         self.n_words = len(word2index.keys())
+        # Reverse index and words 
         self.index2word = {v: k for k, v in word2index.items()}
         
     
@@ -60,10 +63,14 @@ def load_glove(file_path, small=True):
     words = []
     with open(file_path, encoding='utf8') as lines:
         for line in lines:
+            # Load only 5000 words is small is called
             if small and idx > 5000:
                 break
+            # Split the line at the spaces and create a list where first is word and next is the word embedding vectors
             line = line.split()
+            # Assign dict key to the word in the line and value an index 
             word2idx[line[0].lower()] = idx
+            # Assign dict key to the word in the line and value a numpay array of the word (embedding from GloVe) 
             vectors[line[0].lower()] = np.array(list(line[1:]), dtype='float')
             idx += 1
     return vectors, word2idx
