@@ -4,7 +4,7 @@ import torch.nn.functional as F
 
 class Encoder(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, device):
+    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout):
         
         super(Encoder, self).__init__()
         
@@ -14,8 +14,7 @@ class Encoder(nn.Module):
         self.embedding = nn.Embedding(vocabolary_size, embedding_dim)
         self.embedding.weight.data.copy(torch.from_numpy(weights_matrix))
         self.gru = nn.GRU(hidden_size, hidden_size, dropout=dropout)
-        self.device = device
-        
+    
     def forward(self, input, hidden):
         
         # Takes input size (B x T x 1) and embed to (B x T x H_emb)
@@ -25,10 +24,6 @@ class Encoder(nn.Module):
         
         return output, hidden
     
-    def initHidden(self):
-        
-        # To initialize a hidden state (B x 1 x H) for the encoder
-        return torch.zeros((self.batch_size, 1, self.hidden_size), device=self.device)
 
 
 
@@ -73,15 +68,24 @@ class Decoder(nn.Module):
     
     def forward(self, input, last_hidden, encoder_outputs):
         
+        # Reads input size (B x 1) and embed to (B x 1 x H_emb)
         embedded = self.embed(input)
+        # Apply dropout
         embedded = self.dropout(embedded)
+        # Apply attention using encoder_outputs and the last hidden state (B x T)
         attn_weights = self.attention(last_hidden, encoder_outputs)
+        # Multiply the attention weights by the encoder_outputs (B x 1 x H)
         context = attn_weights.bmm(encoder_outputs)
+        # Sums the context and decoder input embedded (B x 1 x (H_emb + H))
         rnn_input = torch.cat([embedded, context], 2)
+        # Runs the GRU layer with output (B x 1 x H)
         output, hidden = self.gru(rnn_input, last_hidden)
+        # Squeeze both context and decoder output to (B x H)
         output = output.squeeze(1)
         context = context.squeeze(1)
+        # Sums context and decoder outputs (B x (H*2)) and runs it through a linear layer (B x N_out)
         output = self.out(torch.cat([output, context], 1))
+        # Runs output through softmax
         output = F.log_softmax(output, dim=1)
         
         return output, hidden, attn_weights
