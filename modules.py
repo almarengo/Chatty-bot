@@ -18,13 +18,16 @@ class Encoder(nn.Module):
         
     def forward(self, input, hidden):
         
+        # Takes input size (B x T x 1) and embed to (B x T x H_emb)
         embedded = self.embedding(input)
-        output = self.gru(embedded, hidden)
+        # Runs it through the GRU and get: output (B x T x H) and last hidden state (B x 1 x H)
+        output, hidden = self.gru(embedded, hidden)
         
         return output, hidden
     
     def initHidden(self):
         
+        # To initialize a hidden state (B x 1 x H) for the encoder
         return torch.zeros((self.batch_size, 1, self.hidden_size), device=self.device)
 
 
@@ -35,15 +38,20 @@ class Attention(nn.Module):
         super(Attention, self).__init__()
         
         self.hidden_size = hidden_size
-        self.attn = nn.Linear(self.hidden_size, hidden_size)
+        self.attn = nn.Linear(hidden_size, hidden_size)
         
     def forward(self, hidden, encoder_outputs):
         
+        # Pass the encoder_outputs through a linear layer (B x T x H) --> (B x T x H)
         encoder_outputs = self.attn(encoder_outputs)
+        # Transpose the encoder_outputs to (B x H x T)
         encoder_outputs = encoder_outputs.transpose(1, 2)
+        # Multiply encoder_outputs and the last hidden state to obtain (B x 1 x T)
         energy = torch.bmm(hidden, encoder_outputs)
+        # Squeeze to (B x T)
         att_energy = energy.squeeze(1)
         
+        # Returns the softmax function (B x T)
         return F.softmax(att_energy, dim=1).unsqueeze(1)
 
 
