@@ -53,16 +53,16 @@ class Attention(nn.Module):
 
 class Decoder(nn.Module):
     
-    def __init__(self, embed_size, hidden_size, output_size, dropout):
+    def __init__(self, embedding_dim, hidden_size, output_size, dropout):
         
-        self.embed_size = embed_size
+        self.embedding_dim = embedding_dim
         self.hidden_size = hidden_size
         self.output_size = output_size
         
-        self.embedded = nn.Embedding(output_size, self.embed_size)
+        self.embedded = nn.Embedding(output_size, self.embedding_dim)
         self.dropout = nn.Dropout(dropout, inplace=True)
         self.attention = Attention(hidden_size)
-        self.gru = nn.GRU(hidden_size+embed_size, hidden_size, dropout=dropout)
+        self.gru = nn.GRU(hidden_size+embedding_dim, hidden_size, dropout=dropout)
         self.out = nn.Linear(hidden_size*2, output_size)
         
     

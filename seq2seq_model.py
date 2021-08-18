@@ -1,17 +1,18 @@
 import random
 import torch
 from torch import nn
+from modules import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, encoder, decoder, max_out_length, device, criterion):
+    def __init__(self, batch_size, vocabolary_size, max_out_length, output_size, embedding_dim, hidden_size, weights_matrix, dropout, device, criterion,):
         
         super(Seq2Seq, self).__init__()
         
-        self.encoder = encoder
-        self.decoder = decoder
-        self.batch_size = encoder.batch_size
-        self.output_size = decoder.output_size
+        self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout)
+        self.decoder = Decoder(embedding_dim, hidden_size, output_size, dropout)
+        self.batch_size = batch_size
+        self.output_size = output_size
         self.max_length = max_out_length
         self.device = device
         self.criterion = criterion
