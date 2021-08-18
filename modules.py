@@ -30,6 +30,7 @@ class Encoder(nn.Module):
 class Attention(nn.Module):
     
     def __init__(self, hidden_size):
+
         super(Attention, self).__init__()
         
         self.hidden_size = hidden_size
@@ -54,6 +55,8 @@ class Attention(nn.Module):
 class Decoder(nn.Module):
     
     def __init__(self, embedding_dim, hidden_size, output_size, dropout):
+        
+        super(Decoder, self).__init__()
         
         self.embedding_dim = embedding_dim
         self.hidden_size = hidden_size
