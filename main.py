@@ -6,7 +6,7 @@ import torch.nn.functional as F
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-q, a, pairs, vector = prepare_data('test', 'glove.42B.300d/glove.42B.300d.txt')
+q, a, pairs, vector = prepare_data('test', 'glove.42B.300d/glove.42B.300d.txt', small=True)
 
 matrix_len = q.n_words
 weights_matrix = np.zeros((matrix_len, 300))
