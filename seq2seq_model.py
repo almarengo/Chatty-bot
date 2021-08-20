@@ -9,7 +9,7 @@ class Seq2Seq(nn.Module):
         
         super(Seq2Seq, self).__init__()
         
-        self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout)
+        self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, device)
         self.decoder = Decoder(embedding_dim, hidden_size, output_size, dropout)
         self.batch_size = batch_size
         self.output_size = output_size
@@ -19,7 +19,7 @@ class Seq2Seq(nn.Module):
         self.SOS_token = 0
 
     
-    def forward(self, src, trg, enc_len, dec_len, teacher_forcing_ratio = 0.5):
+    def forward(self, src, trg, enc_len, teacher_forcing_ratio = 0.5):
         
         loss = 0
         decoder_outputs = torch.zeros((self.batch_size, self.max_length, self.output_size), device=self.device)
@@ -40,7 +40,7 @@ class Seq2Seq(nn.Module):
                 decoder_input = trg[inp]
         else:
             for inp in range(self.max_out_length):
-                decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs, dec_len)
+                decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 decoder_outputs[:, inp, :] = decoder_output
                 topv, topi = decoder_output.topk(1)
                 decoder_input = topi.squeeze().detach()

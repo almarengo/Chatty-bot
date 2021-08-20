@@ -71,7 +71,7 @@ class Decoder(nn.Module):
         self.out = nn.Linear(hidden_size*2, output_size)
         
     
-    def forward(self, input, last_hidden, encoder_outputs, dec_len):
+    def forward(self, input, last_hidden, encoder_outputs):
         
         # Reads input size (B x 1) and embed to (B x 1 x H_emb)
         embedded = self.embed(input)
@@ -84,7 +84,7 @@ class Decoder(nn.Module):
         # Sums the context and decoder input embedded (B x 1 x (H_emb + H))
         rnn_input = torch.cat([embedded, context], 2)
         # Runs the GRU layer with output (B x 1 x H)
-        output, hidden = run_lstm(self.gru, rnn_input, dec_len, self.device, hidden=last_hidden)
+        output, hidden = self.gru(rnn_input, hidden=last_hidden)
         # Squeeze both context and decoder output to (B x H)
         output = output.squeeze(1)
         context = context.squeeze(1)

@@ -3,6 +3,7 @@ from seq2seq_model import *
 import numpy as np
 import torch
 from tqdm.notebook import tnrange, tqdm_notebook
+from train_utils import *
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

@@ -26,7 +26,7 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
         encoder_in, decoder_in, enc_len, dec_len = to_batch_sequence(pairs, st, ed, perm, device)
 
         # Calculate outputs and loss
-        output_values, loss = model(encoder_in, decoder_in, enc_len, dec_len)
+        output_values, loss = model(encoder_in, decoder_in, enc_len)
         
         cum_loss += loss.detach().numpy()*(ed - st)
 
