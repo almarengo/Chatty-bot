@@ -5,7 +5,7 @@ from modules import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, max_out_length, output_size, embedding_dim, hidden_size, weights_matrix, dropout, device, criterion,):
+    def __init__(self, batch_size, vocabolary_size, max_out_length, output_size, embedding_dim, hidden_size, weights_matrix, dropout, device, criterion):
         
         super(Seq2Seq, self).__init__()
         
@@ -47,4 +47,8 @@ class Seq2Seq(nn.Module):
                 loss += self.criterion(decoder_output, trg[inp]) 
         
         return decoder_outputs, loss
+
+    def predict(self, encoder_input):
+
+        pass
                 

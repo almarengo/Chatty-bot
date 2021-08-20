@@ -1,8 +1,8 @@
-from utils import prepare_data
+from load_utils import prepare_data
+from seq2seq_model import *
 import numpy as np
 import torch
-from torch import nn
-import torch.nn.functional as F
+from tqdm.notebook import tnrange, tqdm_notebook
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
