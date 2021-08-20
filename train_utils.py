@@ -4,7 +4,7 @@ from torch import nn
 import torch.nn.functional as F
 
 
-def epoch_train(model, optimizer, batch_size, pairs):
+def epoch_train(model, optimizer, batch_size, pairs, device):
     
     # Set the model in train mode
     model.train()
@@ -21,10 +21,10 @@ def epoch_train(model, optimizer, batch_size, pairs):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in = to_batch_sequence(pairs, st, ed, perm, device)
+        encoder_in, decoder_in, enc_len, dec_len = to_batch_sequence(pairs, st, ed, perm, device)
 
         # Calculate outputs and loss
-        output_values, loss = model(encoder_in, decoder_in)
+        output_values, loss = model(encoder_in, decoder_in, enc_len, dec_len)
         
         # Clear gradients (pytorch accumulates gradients by default)
         optimizer.zero_grad() 
@@ -71,4 +71,4 @@ def to_batch_sequence(pairs, st, ed, perm, device):
             if type(word) == int:
                 decoder_in_tensor[i, t] = word 
         
-    return encoder_in_tensor, decoder_in_tensor
+    return encoder_in_tensor, decoder_in_tensor, max_encoder_length, max_decoder_length

@@ -1,10 +1,11 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
+from net_utils import *
 
 class Encoder(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout):
+    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, device):
         
         super(Encoder, self).__init__()
         
@@ -14,13 +15,14 @@ class Encoder(nn.Module):
         self.embedding = nn.Embedding(vocabolary_size, embedding_dim)
         self.embedding.weight.data.copy(torch.from_numpy(weights_matrix))
         self.gru = nn.GRU(hidden_size, hidden_size, dropout=dropout)
+        self.device = device
     
-    def forward(self, input, hidden):
+    def forward(self, input, enc_len, hidden=None):
         
         # Takes input size (B x T x 1) and embed to (B x T x H_emb)
         embedded = self.embedding(input)
         # Runs it through the GRU and get: output (B x T x H) and last hidden state (B x 1 x H)
-        output, hidden = self.gru(embedded, hidden)
+        output, hidden = run_lstm(self.gru, embedded, enc_len, self.device, hidden=hidden)
         
         return output, hidden
     
@@ -69,7 +71,7 @@ class Decoder(nn.Module):
         self.out = nn.Linear(hidden_size*2, output_size)
         
     
-    def forward(self, input, last_hidden, encoder_outputs):
+    def forward(self, input, last_hidden, encoder_outputs, dec_len):
         
         # Reads input size (B x 1) and embed to (B x 1 x H_emb)
         embedded = self.embed(input)
@@ -82,7 +84,7 @@ class Decoder(nn.Module):
         # Sums the context and decoder input embedded (B x 1 x (H_emb + H))
         rnn_input = torch.cat([embedded, context], 2)
         # Runs the GRU layer with output (B x 1 x H)
-        output, hidden = self.gru(rnn_input, last_hidden)
+        output, hidden = run_lstm(self.gru, rnn_input, dec_len, self.device, hidden=last_hidden)
         # Squeeze both context and decoder output to (B x H)
         output = output.squeeze(1)
         context = context.squeeze(1)
