@@ -16,6 +16,8 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
     perm = np.random.permutation(n_records)
     
     st = 0
+
+    cum_loss = 0.0
     
     while st < n_records:
         
@@ -26,6 +28,8 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
         # Calculate outputs and loss
         output_values, loss = model(encoder_in, decoder_in, enc_len, dec_len)
         
+        cum_loss += loss.detach().numpy()*(ed - st)
+
         # Clear gradients (pytorch accumulates gradients by default)
         optimizer.zero_grad() 
 
@@ -35,7 +39,7 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
         
         st = ed
 
-print(f"Optimization ended successfully")
+    return cum_loss/n_records
 
 
 

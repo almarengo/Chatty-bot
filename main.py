@@ -17,3 +17,24 @@ for i, word in enumerate(q.word2index):
     except:
         continue
 
+
+# Declaire optimizer, batch, etc...
+
+# Initiate Model
+
+
+# Now run for 100 epochs
+for epoch in tnrange(100, desc="Total epochs: "):
+  
+    # Calculte loss
+    loss = epoch_train(model, optimizer, batch_size, pairs, device)
+
+    # Calculate accuracy
+    
+
+    # Try to do interactive plot
+    
+
+    
+
+print(f"Optimization ended successfully")
