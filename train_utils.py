@@ -29,8 +29,15 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
         encoder_in, decoder_in, enc_len, dec_len, seq_length = to_batch_sequence(pairs, st, ed, perm, device)
 
         # Calculate outputs and loss
-        output_values, loss = model(encoder_in, decoder_in, enc_len, dec_len, seq_length)
+        output_values, output_values_loss_inp = model(encoder_in, decoder_in, enc_len, dec_len, seq_length)
         
+        loss = model.loss(output_values_loss_inp, decoder_in, dec_len)
+
+        # Backpropagation & weight adjustment
+        loss.backward()
+
+        optimizer.step()
+
         cum_loss += loss*(ed - st)
 
         st = ed

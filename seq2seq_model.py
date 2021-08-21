@@ -23,7 +23,6 @@ class Seq2Seq(nn.Module):
     
     def forward(self, src, trg, enc_len, dec_len, seq_length, teacher_forcing_ratio = 0.5):
         
-        loss = 0
         decoder_outputs = torch.zeros((self.batch_size, self.max_length, self.output_size), device=self.device)
         
         encoder_outputs, encoder_hidden = self.encoder(src, enc_len)
@@ -32,12 +31,19 @@ class Seq2Seq(nn.Module):
         decoder_hidden = encoder_hidden
         
         use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
+
+        decoder_outputs_list = []
         
         if use_teacher_forcing:
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+                # Assigns max prob to position 1 (EOS) to words at end of sequence 
+                decoder_output = assign_EOS(decoder_output, self.batch_size, seq_length, inp)
+                # Runs output through softmax
+                decoder_output = F.log_softmax(decoder_output, dim=1)
                 decoder_outputs[:, inp, :] = decoder_output
-                loss += self.criterion(decoder_output, trg[inp]) 
+                decoder_outputs_list.append(decoder_output)
+                
                 decoder_input = trg[inp]
         else:
             for inp in range(dec_len):
@@ -47,19 +53,26 @@ class Seq2Seq(nn.Module):
                 # Runs output through softmax
                 decoder_output = F.log_softmax(decoder_output, dim=1)
                 decoder_outputs[:, inp, :] = decoder_output
+                decoder_outputs_list.append(decoder_output)
                 topv, topi = decoder_output.topk(1)
-                loss += self.criterion(decoder_output, trg[inp]) 
+
                 decoder_input = topi.squeeze().detach()
 
+        return decoder_outputs, decoder_outputs_list
 
-        # Backpropagation & weight adjustment
-        loss.backward()
 
-        self.optimizer.step()
+
+    def loss(self, decoder_outputs_list, trg, dec_len):
+
+        loss = 0
+        for idx in range(dec_len):
+            loss += self.criterion(decoder_outputs_list[idx], trg[idx]) 
 
         loss = loss.item()/dec_len
+        
+        return loss
 
-        return decoder_outputs, loss
+
 
     def predict(self, encoder_input):
 
