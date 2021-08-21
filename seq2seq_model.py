@@ -36,19 +36,17 @@ class Seq2Seq(nn.Module):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 decoder_outputs[:, inp, :] = decoder_output
                 loss += self.criterion(decoder_output, trg[inp]) 
-                
                 decoder_input = trg[inp]
         else:
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 decoder_outputs[:, inp, :] = decoder_output
                 topv, topi = decoder_output.topk(1)
-                decoder_input = topi.squeeze().detach()
                 loss += self.criterion(decoder_output, trg[inp]) 
+                decoder_input = topi.squeeze().detach()
         
-        decoder_outputs = deactivate_weights(decoder_outputs, self.batch_size, dec_len)
-        
-        return decoder_outputs, loss
+
+        return decoder_outputs, loss/dec_len
 
     def predict(self, encoder_input):
 

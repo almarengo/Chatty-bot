@@ -26,11 +26,3 @@ def run_lstm(lstm, inp, inp_len, device, hidden=None):
     ret_h = (sort_ret_h[0][:, sort_perm_inv], sort_ret_h[1][:, sort_perm_inv])
     return ret_s, ret_h
 
-def deactivate_weights(score, batch_size, seq_length):
-
-    for idx, num in enumerate(range(batch_size)):
-        if num < seq_length:
-            score[idx, num:] = -100
-            
-    return score
-
