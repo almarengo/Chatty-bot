@@ -8,6 +8,9 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
     
     # Set the model in train mode
     model.train()
+
+    # Clear gradients (pytorch accumulates gradients by default)
+    optimizer.zero_grad() 
     
     # Gets number total number of rows for training
     n_records = len(pairs)
@@ -28,15 +31,8 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
         # Calculate outputs and loss
         output_values, loss = model(encoder_in, decoder_in, enc_len, dec_len)
         
-        cum_loss += loss.detach().numpy()*(ed - st)
+        cum_loss += loss*(ed - st)
 
-        # Clear gradients (pytorch accumulates gradients by default)
-        optimizer.zero_grad() 
-
-        # Backpropagation & weight adjustment
-        loss.backward()
-        optimizer.step()
-        
         st = ed
 
     return cum_loss/n_records

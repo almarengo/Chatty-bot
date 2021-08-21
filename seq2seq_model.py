@@ -6,7 +6,7 @@ from net_utils import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, output_size, embedding_dim, hidden_size, weights_matrix, dropout, device, criterion):
+    def __init__(self, batch_size, vocabolary_size, output_size, embedding_dim, hidden_size, weights_matrix, dropout, device, criterion, optimizer):
         
         super(Seq2Seq, self).__init__()
         
@@ -16,6 +16,7 @@ class Seq2Seq(nn.Module):
         self.output_size = output_size
         self.device = device
         self.criterion = criterion
+        self.optimizer = optimizer
         self.SOS_token = 0
 
     
@@ -44,9 +45,15 @@ class Seq2Seq(nn.Module):
                 topv, topi = decoder_output.topk(1)
                 loss += self.criterion(decoder_output, trg[inp]) 
                 decoder_input = topi.squeeze().detach()
-        
 
-        return decoder_outputs, loss/dec_len
+        # Backpropagation & weight adjustment
+        loss.backward()
+
+        self.optimizer.step()
+
+        loss = loss.item()/dec_len
+
+        return decoder_outputs, loss
 
     def predict(self, encoder_input):
 
