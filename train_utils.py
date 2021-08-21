@@ -26,10 +26,10 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_len, dec_len = to_batch_sequence(pairs, st, ed, perm, device)
+        encoder_in, decoder_in, enc_len, dec_len, seq_length = to_batch_sequence(pairs, st, ed, perm, device)
 
         # Calculate outputs and loss
-        output_values, loss = model(encoder_in, decoder_in, enc_len, dec_len)
+        output_values, loss = model(encoder_in, decoder_in, enc_len, dec_len, seq_length)
         
         cum_loss += loss*(ed - st)
 
@@ -70,5 +70,7 @@ def to_batch_sequence(pairs, st, ed, perm, device):
         for t, word in enumerate(seq):
             if type(word) == int:
                 decoder_in_tensor[i, t] = word 
-        
-    return encoder_in_tensor, decoder_in_tensor, max_encoder_length, max_decoder_length
+
+    decoder_lengths = np.array(decoder_lengths)
+
+    return encoder_in_tensor, decoder_in_tensor, max_encoder_length, max_decoder_length, decoder_lengths

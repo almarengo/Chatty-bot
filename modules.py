@@ -90,7 +90,5 @@ class Decoder(nn.Module):
         context = context.squeeze(1)
         # Sums context and decoder outputs (B x (H*2)) and runs it through a linear layer (B x N_out)
         output = self.out(torch.cat([output, context], 1))
-        # Runs output through softmax
-        output = F.log_softmax(output, dim=1)
         
         return output, hidden, attn_weights

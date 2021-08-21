@@ -26,3 +26,10 @@ def run_lstm(lstm, inp, inp_len, device, hidden=None):
     ret_h = (sort_ret_h[0][:, sort_perm_inv], sort_ret_h[1][:, sort_perm_inv])
     return ret_s, ret_h
 
+def assign_EOS(vector, batch_size, seq_length, current_step):
+
+    for idx, num in enumerate(seq_length):
+        if num < current_step:
+            vector[idx, 1] = 100
+    return vector
+
