@@ -38,6 +38,8 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
 
         optimizer.step()
 
+        loss = loss.item()/dec_len
+
         cum_loss += loss*(ed - st)
 
         st = ed
@@ -81,3 +83,46 @@ def to_batch_sequence(pairs, st, ed, perm, device):
     decoder_lengths = np.array(decoder_lengths)
 
     return encoder_in_tensor, decoder_in_tensor, max_encoder_length, max_decoder_length, decoder_lengths
+
+
+
+def epoch_accuray(model, batch_size, pairs, device):
+    
+    # Set the model in evaluation mode
+    model.eval()
+    
+    # Gets number total number of rows for training
+    n_records = len(pairs)
+    
+    # Shuffle the row indexes 
+    perm = np.random.permutation(n_records)
+    
+    st = 0
+
+    acc_num = 0.0
+    
+    while st < n_records:
+        
+        ed = st + batch_size if (st + batch_size) < n_records else n_records
+    
+        encoder_in, decoder_in, enc_len, dec_len, seq_length = to_batch_sequence(pairs, st, ed, perm, device)
+
+        # Calculate outputs 
+        outputs, _ = model(encoder_in, decoder_in, enc_len, dec_len, seq_length)
+
+        predictions = model.predict(outputs)
+
+        # Getting the true answer from the pairs (answers are at index 1 for each row)
+        true_batch = []
+
+        for idx in range(st, ed):
+            true_batch.append(pairs[idx][1])
+
+        # Calculate the error for each batch
+        error = model.check_acc(batch_size, predictions, true_batch)
+
+        acc_num += (ed-st-error)
+
+        st = ed
+
+    return acc_num/n_records

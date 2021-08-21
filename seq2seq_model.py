@@ -66,12 +66,20 @@ class Seq2Seq(nn.Module):
 
         loss = 0
         for idx in range(dec_len):
+
             loss += self.criterion(decoder_outputs_list[idx], trg[idx]) 
 
-        loss = loss.item()/dec_len
-        
         return loss
 
+
+    def check_acc(self, batch_size, preditions, true_seq):
+
+        error = 0
+        for b, (pred_seq, gt_seq) in enumerate(zip(preditions, true_seq)):
+            if pred_seq != gt_seq:
+                error += 1
+        
+        return error
 
 
     def predict(self, encoder_input):
