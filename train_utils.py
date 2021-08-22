@@ -86,7 +86,7 @@ def to_batch_sequence(pairs, st, ed, perm, device):
 
 
 
-def epoch_accuray(model, batch_size, pairs, device):
+def epoch_accuray(model, batch_size, pairs, answers, device):
     
     # Set the model in evaluation mode
     model.eval()
@@ -114,7 +114,10 @@ def epoch_accuray(model, batch_size, pairs, device):
         true_batch = []
 
         for idx in range(st, ed):
-            true_batch.append(pairs[idx][1])
+            row_list = []
+            for word in pairs[idx][1].split():
+                row_list.append(answers.word2index[word])
+            true_batch.append(row_list)
 
         # Calculate the error for each batch
         error = model.check_acc(batch_size, predictions, true_batch)

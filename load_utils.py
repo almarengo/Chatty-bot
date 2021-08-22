@@ -28,7 +28,7 @@ class Input_lang:
     
     def add_sentence(self, sentence):
         for word in sentence.split():
-            return self.add_word(word)
+            self.add_word(word)
 
 
 class Output_lang:
@@ -52,7 +52,7 @@ class Output_lang:
     
     def add_sentence(self, sentence):
         for word in sentence.split():
-            return self.add_word(word)
+            self.add_word(word)
 
 
 
