@@ -23,7 +23,7 @@ class Seq2Seq(nn.Module):
     
     def forward(self, src, trg, enc_len, dec_len, seq_length, teacher_forcing_ratio = 0.5):
         
-        decoder_outputs = torch.zeros((self.batch_size, self.max_length, self.output_size), device=self.device)
+        decoder_outputs = torch.zeros((self.batch_size, dec_len, self.output_size), device=self.device)
         
         encoder_outputs, encoder_hidden = self.encoder(src, enc_len)
         
@@ -82,7 +82,33 @@ class Seq2Seq(nn.Module):
         return error
 
 
-    def predict(self, encoder_input):
+    def predict(self, src, enc_len, dec_len):
 
-        pass
+        decoder_outputs = torch.zeros((self.batch_size, dec_len, self.output_size), device=self.device)
+        
+        encoder_outputs, encoder_hidden = self.encoder(src, enc_len)
+        
+        decoder_input = torch.tensor([self.batch_size*[self.SOS_token]], device = self.device)
+        decoder_hidden = encoder_hidden
+        
+
+        prediction = torch.empty((self.batch_size, 1), dtype=torch.int32, device = self.device)
+        
+        for inp in range(dec_len):
+            decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+            # Assigns max prob to position 1 (EOS) to words at end of sequence 
+            decoder_output = assign_EOS(decoder_output, self.batch_size, seq_length, inp)
+            # Runs output through softmax
+            decoder_output = F.log_softmax(decoder_output, dim=1)
+
+            decoder_outputs[:, inp, :] = decoder_output
+            
+            topv, topi = decoder_output.topk(1)
+            decoder_input = topi.squeeze().detach()
+
+            prediction = torch.cat([prediction, topi], dim=-1)
+
+        prediction = prediction[:, 1:].numpy().tolist()
+        
+        return prediction
                 
