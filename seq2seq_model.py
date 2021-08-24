@@ -19,6 +19,7 @@ class Seq2Seq(nn.Module):
         self.criterion = criterion
         self.optimizer = optimizer
         self.SOS_token = 0
+        self.EOS_token = 1
 
     
     def forward(self, src, trg, enc_len, dec_len, seq_length, teacher_forcing_ratio = 0.5):
@@ -82,7 +83,7 @@ class Seq2Seq(nn.Module):
         return error
 
 
-    def predict(self, src, enc_len, dec_len):
+    def predict(self, src, enc_len, dec_len, seq_length=None, max_length=None):
 
         decoder_outputs = torch.zeros((self.batch_size, dec_len, self.output_size), device=self.device)
         
@@ -93,22 +94,47 @@ class Seq2Seq(nn.Module):
         
 
         prediction = torch.empty((self.batch_size, 1), dtype=torch.int32, device = self.device)
-        
-        for inp in range(dec_len):
-            decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
-            # Assigns max prob to position 1 (EOS) to words at end of sequence 
-            decoder_output = assign_EOS(decoder_output, self.batch_size, seq_length, inp)
-            # Runs output through softmax
-            decoder_output = F.log_softmax(decoder_output, dim=1)
 
-            decoder_outputs[:, inp, :] = decoder_output
+        is_pred = self.batch_size == 1
+
+        if is_pred:
+            prediction = []
+            for inp in range(max_length):
+                decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+                # Assigns max prob to position 1 (EOS) to words at end of sequence 
+                decoder_output = assign_EOS(decoder_output, self.batch_size, seq_length, inp)
+                # Runs output through softmax
+                decoder_output = F.log_softmax(decoder_output, dim=1)
+                topv, topi = decoder_output.topk(1)
+                if topi.item() == self.EOS_token:
+                    prediction.append(1)
+                    break
+                else:
+                    prediction.append(topi.item())
+
+                decoder_input = topi.squeeze().detach()
             
-            topv, topi = decoder_output.topk(1)
-            decoder_input = topi.squeeze().detach()
+            ret_pred = list(prediction)
+            
 
-            prediction = torch.cat([prediction, topi], dim=-1)
+        else:
+            for inp in range(dec_len):
+                decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
+                # Assigns max prob to position 1 (EOS) to words at end of sequence 
+                decoder_output = assign_EOS(decoder_output, self.batch_size, seq_length, inp)
+                # Runs output through softmax
+                decoder_output = F.log_softmax(decoder_output, dim=1)
 
-        prediction = prediction[:, 1:].numpy().tolist()
+                decoder_outputs[:, inp, :] = decoder_output
+                
+                topv, topi = decoder_output.topk(1)
+                decoder_input = topi.squeeze().detach()
+
+                prediction = torch.cat([prediction, topi], dim=-1)
+
+            prediction = prediction[:, 1:].numpy().tolist()
+
+            ret_pred = [word[:length+1] for word, length in zip(prediction, seq_length)]
         
-        return prediction
+        return ret_pred
                 
