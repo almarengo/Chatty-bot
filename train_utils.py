@@ -4,7 +4,7 @@ from torch import nn
 import torch.nn.functional as F
 
 
-def epoch_train(model, optimizer, batch_size, pairs, device):
+def epoch_train(model, optimizer, batch_size, pairs, q, device):
     
     # Set the model in train mode
     model.train()
@@ -26,7 +26,7 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_len, dec_len, seq_length = to_batch_sequence(pairs, st, ed, perm, device)
+        encoder_in, decoder_in, enc_len, dec_len, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
 
         # Calculate outputs and loss
         output_values, output_values_loss_inp = model(encoder_in, decoder_in, enc_len, dec_len, seq_length)
@@ -48,7 +48,7 @@ def epoch_train(model, optimizer, batch_size, pairs, device):
 
 
 
-def to_batch_sequence(pairs, st, ed, perm, device):
+def to_batch_sequence(pairs, q, st, ed, perm, device):
     
     encoder_in = []
     decoder_in = []
@@ -86,7 +86,7 @@ def to_batch_sequence(pairs, st, ed, perm, device):
 
 
 
-def epoch_accuray(model, batch_size, pairs, answers, device):
+def epoch_accuray(model, batch_size, pairs, q, a, device):
     
     # Set the model in evaluation mode
     model.eval()
@@ -105,7 +105,7 @@ def epoch_accuray(model, batch_size, pairs, answers, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_len, dec_len, seq_length = to_batch_sequence(pairs, st, ed, perm, device)
+        encoder_in, decoder_in, enc_len, dec_len, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
 
         # Calculate outputs (make predictions)
         predictions = model.predict(encoder_in, decoder_in, enc_len, dec_len, seq_length)
@@ -116,7 +116,7 @@ def epoch_accuray(model, batch_size, pairs, answers, device):
         for idx in range(st, ed):
             row_list = []
             for word in pairs[idx][1].split():
-                row_list.append(answers.word2index[word])
+                row_list.append(a.word2index[word])
             true_batch.append(row_list)
 
         # Calculate the error for each batch

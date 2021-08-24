@@ -31,7 +31,7 @@ for epoch in tnrange(100, desc="Total epochs: "):
     loss = epoch_train(model, optimizer, batch_size, pairs, device)
 
     # Calculate accuracy
-    
+    accuracy = epoch_accuray(model, batch_size, pairs, answers, device)
 
     # Try to do interactive plot
     
