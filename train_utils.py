@@ -26,19 +26,19 @@ def epoch_train(model, optimizer, batch_size, pairs, q, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_len, dec_len, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
+        encoder_in, decoder_in, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
 
         # Calculate outputs and loss
-        output_values, output_values_loss_inp = model(encoder_in, decoder_in, enc_len, dec_len, seq_length)
+        output_values, output_values_loss_inp = model(encoder_in, decoder_in, seq_length)
         
-        loss = model.loss(output_values_loss_inp, decoder_in, dec_len)
+        loss = model.loss(output_values_loss_inp, decoder_in)
 
         # Backpropagation & weight adjustment
         loss.backward()
 
         optimizer.step()
 
-        loss = loss.item()/dec_len
+        loss = loss.item()/decoder_in.size()[1]
 
         cum_loss += loss*(ed - st)
 
@@ -67,8 +67,8 @@ def to_batch_sequence(pairs, q, st, ed, perm, device):
     max_encoder_length = max(encoder_lengths)
     max_decoder_length = max(decoder_lengths)
     
-    encoder_in_tensor = torch.zeros(ed, max_encoder_length, device=device, dtype=torch.float)
-    decoder_in_tensor = torch.zeros(ed, max_decoder_length, device=device, dtype=torch.float)
+    encoder_in_tensor = torch.zeros(ed-st, max_encoder_length, device=device, dtype=torch.float)
+    decoder_in_tensor = torch.zeros(ed-st, max_decoder_length, device=device, dtype=torch.float)
     
     for i, seq in enumerate(encoder_in):
         for t, word in enumerate(seq):
@@ -82,7 +82,7 @@ def to_batch_sequence(pairs, q, st, ed, perm, device):
 
     decoder_lengths = np.array(decoder_lengths)
 
-    return encoder_in_tensor, decoder_in_tensor, max_encoder_length, max_decoder_length, decoder_lengths
+    return encoder_in_tensor, decoder_in_tensor, decoder_lengths
 
 
 
@@ -105,10 +105,10 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_len, dec_len, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
+        encoder_in, decoder_in, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
 
         # Calculate outputs (make predictions)
-        predictions = model.predict(encoder_in, decoder_in, enc_len, dec_len, seq_length)
+        predictions = model.predict(encoder_in, decoder_in, seq_length)
 
         # Getting the true answer from the pairs (answers are at index 1 for each row)
         true_batch = []

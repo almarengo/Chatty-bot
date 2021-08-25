@@ -22,7 +22,10 @@ class Seq2Seq(nn.Module):
         self.EOS_token = 1
 
     
-    def forward(self, src, trg, enc_len, dec_len, seq_length, teacher_forcing_ratio = 0.5):
+    def forward(self, src, trg, seq_length, teacher_forcing_ratio = 0.5):
+
+        enc_len = src.size()[1]
+        dec_len = trg.size()[1]
         
         decoder_outputs = torch.zeros((self.batch_size, dec_len, self.output_size), device=self.device)
         
@@ -63,8 +66,9 @@ class Seq2Seq(nn.Module):
 
 
 
-    def loss(self, decoder_outputs_list, trg, dec_len):
+    def loss(self, decoder_outputs_list, trg):
 
+        dec_len = trg.size()[1]
         loss = 0
         for idx in range(dec_len):
 
