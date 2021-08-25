@@ -87,7 +87,9 @@ class Seq2Seq(nn.Module):
         return error
 
 
-    def predict(self, src, enc_len, dec_len, seq_length=None, max_length=None):
+    def predict(self, src, dec_len=None, seq_length=None, max_length=50):
+
+        enc_len = src.size()[1]
 
         decoder_outputs = torch.zeros((self.batch_size, dec_len, self.output_size), device=self.device)
         

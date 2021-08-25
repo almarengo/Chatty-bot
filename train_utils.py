@@ -107,8 +107,10 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
     
         encoder_in, decoder_in, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
 
+        dec_len = decoder_in.size()[1]
+
         # Calculate outputs (make predictions)
-        predictions = model.predict(encoder_in, decoder_in, seq_length)
+        predictions = model.predict(encoder_in, dec_len = dec_len, seq_length=seq_length)
 
         # Getting the true answer from the pairs (answers are at index 1 for each row)
         true_batch = []
