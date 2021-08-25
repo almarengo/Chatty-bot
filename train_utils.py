@@ -122,7 +122,7 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
             true_batch.append(row_list)
 
         # Calculate the error for each batch
-        error = model.check_acc(batch_size, predictions, true_batch)
+        error = model.check_acc(predictions, true_batch)
 
         acc_num += (ed-st-error)
 
