@@ -1,40 +1,61 @@
-import chainer
-import chainer.functions as F
-import chainer.links as L
-from chainer import training
-
 from nltk.translate import bleu_score
+from train_utils import *
 
-class CalculateBleu(chainer.training.Extension):
+class CalculateBleu():
 
-    trigger = 1, 'epoch'
-    priority = chainer.training.PRIORITY_WRITER
-
-    def __init__(
-            self, model, test_data, key, device, batch=100, max_length=100):
+    def __init__(self, model, batch_size, pairs, q, a, device):
         self.model = model
-        self.test_data = test_data
-        self.key = key
-        self.batch = batch
+        self.batch_size = batch_size
+        self.pairs = pairs
+        self.q = q
+        self.a = a
         self.device = device
-        self.max_length = max_length
+        
+    def score(self):
 
-    def __call__(self, trainer):
-        device = self.device
+        # Set the model in evaluation mode
+        self.model.eval()
+        
+        # Gets number total number of rows for training
+        n_records = len(self.pairs)
+        
+        # Shuffle the row indexes 
+        perm = np.random.permutation(n_records)
+        
+        st = 0
 
-        with chainer.no_backprop_mode():
-            references = []
-            hypotheses = []
-            for i in range(0, len(self.test_data), self.batch):
-                sources, targets = zip(*self.test_data[i:i + self.batch])
-                references.extend([[t.tolist()] for t in targets])
+        predictions_epoch = []
+        true_epoch = []
+        
+        while st < n_records:
+            
+            ed = st + self.batch_size if (st + self.batch_size) < n_records else n_records
+        
+            encoder_in, decoder_in, seq_length = to_batch_sequence(self.pairs, self.q, st, ed, perm, self.device)
 
-                sources = [device.send(x) for x in sources]
-                ys = [y.tolist()
-                      for y in self.model.translate(sources, self.max_length)]
-                hypotheses.extend(ys)
+            dec_len = decoder_in.size()[1]
 
-        bleu = bleu_score.corpus_bleu(
-            references, hypotheses,
-            smoothing_function=bleu_score.SmoothingFunction().method1)
-        chainer.report({self.key: bleu})
+            # Calculate outputs (make predictions)
+            predictions = self.model.predict(encoder_in, dec_len = dec_len, seq_length=seq_length)
+
+            # Getting the true answer from the pairs (answers are at index 1 for each row)
+            true_batch = []
+
+            for idx in range(st, ed):
+                row_list = []
+                for word in self.pairs[idx][1].split():
+                    row_list.append(self.a.word2index[word])
+                true_batch.append(row_list)
+            
+            predictions_epoch.extend(predictions)
+            true_epoch.extend(true_batch)
+            
+            st = ed
+
+        references = [[[a.index2word[idx] for idx in line]] for line in true_epoch]
+        hypotheses = [[a.index2word[idx] for idx in line] for line in predictions_epoch]
+
+        bleu = bleu_score.corpus_bleu(references, hypotheses, smoothing_function=bleu_score.SmoothingFunction().method1)
+
+        return bleu
+        

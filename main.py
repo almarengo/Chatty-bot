@@ -25,14 +25,18 @@ for i, word in enumerate(q.word2index):
 # Initiate Model
 
 
-# Now run for 100 epochs
-for epoch in tnrange(100, desc="Total epochs: "):
+# Now run for 1000 epochs
+for epoch in tnrange(2, desc="Total epochs: "):
   
     # Calculte loss
     loss = epoch_train(model, optimizer, batch_size, pairs, device)
 
     # Calculate accuracy
-    accuracy = epoch_accuray(model, batch_size, pairs, answers, device)
+    accuracy = epoch_accuray(model, batch_size, pairs, a, device)
+
+    # Calculate BLEU Score
+    BLEU_model = CalculateBleu(model, batch_size, pairs, q, a, device)
+    bleu_score = BLEU_model.score()
 
     # Try to do interactive plot
     
