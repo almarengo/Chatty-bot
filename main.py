@@ -52,6 +52,5 @@ for epoch in tnrange(2, desc="Total epochs: "):
     # Try to do interactive plot
     line1 = live_plotter(epoch, loss, line1)
 
-    
 
 print(f"Optimization ended successfully")
