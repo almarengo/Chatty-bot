@@ -5,6 +5,7 @@ import numpy as np
 import torch
 from tqdm.notebook import tnrange, tqdm_notebook
 from train_utils import *
+from pylive import live_plotter
 
 device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
