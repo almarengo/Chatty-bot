@@ -7,7 +7,7 @@ from net_utils import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, output_size, embedding_dim, hidden_size, weights_matrix, dropout, device, criterion, optimizer):
+    def __init__(self, batch_size, vocabolary_size, output_size, embedding_dim, hidden_size, weights_matrix, dropout, device, criterion):
         
         super(Seq2Seq, self).__init__()
         
@@ -16,21 +16,19 @@ class Seq2Seq(nn.Module):
         self.output_size = output_size
         self.device = device
         self.criterion = criterion
-        self.optimizer = optimizer
         self.SOS_token = 0
         self.EOS_token = 1
 
     
-    def forward(self, src, trg, seq_length, teacher_forcing_ratio = 0.5):
+    def forward(self, src, trg, enc_length, seq_length, teacher_forcing_ratio = 0.5):
 
         batch_size = src.size()[0]
 
-        enc_len = src.size()[1]
         dec_len = trg.size()[1]
         
         decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
         
-        encoder_outputs, encoder_hidden = self.encoder(src, enc_len)
+        encoder_outputs, encoder_hidden = self.encoder(src, enc_length)
         
         decoder_input = torch.tensor([batch_size*[self.SOS_token]], device = self.device)
         decoder_hidden = encoder_hidden

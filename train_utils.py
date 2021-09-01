@@ -8,7 +8,10 @@ def epoch_train(model, optimizer, batch_size, pairs, q, device):
     
     # Set the model in train mode
     model.train()
-
+    if optimizer == 'Adam':
+        optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+    else:
+        optimizer = torch.optim.SDG(model.parameters(), lr=0.0001)
     # Clear gradients (pytorch accumulates gradients by default)
     optimizer.zero_grad() 
     
@@ -26,10 +29,10 @@ def epoch_train(model, optimizer, batch_size, pairs, q, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
+        encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
 
         # Calculate outputs and loss
-        output_values, output_values_loss_inp = model(encoder_in, decoder_in, seq_length)
+        output_values, output_values_loss_inp = model(encoder_in, decoder_in, enc_length, seq_length)
         
         loss = model.loss(output_values_loss_inp, decoder_in)
 
@@ -67,8 +70,8 @@ def to_batch_sequence(pairs, q, st, ed, perm, device):
     max_encoder_length = max(encoder_lengths)
     max_decoder_length = max(decoder_lengths)
     
-    encoder_in_tensor = torch.zeros(ed-st, max_encoder_length, device=device, dtype=torch.float)
-    decoder_in_tensor = torch.zeros(ed-st, max_decoder_length, device=device, dtype=torch.float)
+    encoder_in_tensor = torch.zeros(ed-st, max_encoder_length, dtype=torch.long, device=device)
+    decoder_in_tensor = torch.zeros(ed-st, max_decoder_length, dtype=torch.long, device=device)
     
     for i, seq in enumerate(encoder_in):
         for t, word in enumerate(seq):
@@ -80,9 +83,10 @@ def to_batch_sequence(pairs, q, st, ed, perm, device):
             if type(word) == int:
                 decoder_in_tensor[i, t] = word 
 
+    encoder_lengths = np.array(encoder_lengths)
     decoder_lengths = np.array(decoder_lengths)
 
-    return encoder_in_tensor, decoder_in_tensor, decoder_lengths
+    return encoder_in_tensor, decoder_in_tensor, encoder_lengths, decoder_lengths
 
 
 
