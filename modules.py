@@ -12,8 +12,8 @@ class Encoder(nn.Module):
         self.batch_size = batch_size
         self.hidden_size = hidden_size
         self.embedding_dim = embedding_dim
-        self.embedding = nn.Embedding(vocabolary_size, embedding_dim)
-        self.embedding.from_pretrained(torch.from_numpy(weights_matrix))
+        self.embedding = nn.Embedding(vocabolary_size, embedding_dim, device=device)
+        self.embedding.from_pretrained(torch.from_numpy(weights_matrix).to(device))
         self.gru = nn.GRU(hidden_size, hidden_size, dropout=dropout)
         self.device = device
     
