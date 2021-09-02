@@ -12,7 +12,7 @@ class Seq2Seq(nn.Module):
         super(Seq2Seq, self).__init__()
         
         self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, device)
-        self.decoder = Decoder(embedding_dim, hidden_size, output_size, dropout)
+        self.decoder = Decoder(embedding_dim, hidden_size, output_size, dropout, device)
         self.output_size = output_size
         self.device = device
         self.criterion = criterion

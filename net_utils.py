@@ -23,7 +23,7 @@ def run_lstm(lstm, inp, inp_len, device, hidden=None):
     sort_ret_s, sort_ret_h = lstm(lstm_inp, lstm_hidden)
     ret_s = nn.utils.rnn.pad_packed_sequence(sort_ret_s, batch_first=True)[0][sort_perm_inv]
     
-    ret_h = (sort_ret_h[0][:, sort_perm_inv], sort_ret_h[1][:, sort_perm_inv])
+    ret_h = sort_ret_h[:, sort_perm_inv]
     return ret_s, ret_h
 
 def assign_EOS(vector, batch_size, seq_length, current_step):
