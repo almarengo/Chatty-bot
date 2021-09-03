@@ -31,12 +31,12 @@ class CalculateBleu():
             
             ed = st + self.batch_size if (st + self.batch_size) < n_records else n_records
         
-            encoder_in, decoder_in, seq_length = to_batch_sequence(self.pairs, self.q, st, ed, perm, self.device)
+            encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(self.pairs, self.q, self.a, st, ed, perm, self.device)
 
             dec_len = decoder_in.size()[1]
 
             # Calculate outputs (make predictions)
-            predictions = self.model.predict(encoder_in, dec_len = dec_len, seq_length=seq_length)
+            predictions = self.model.predict(encoder_in, enc_length, dec_len = dec_len, seq_length=seq_length)
 
             # Getting the true answer from the pairs (answers are at index 1 for each row)
             true_batch = []
@@ -52,8 +52,8 @@ class CalculateBleu():
             
             st = ed
 
-        references = [[[a.index2word[idx] for idx in line]] for line in true_epoch]
-        hypotheses = [[a.index2word[idx] for idx in line] for line in predictions_epoch]
+        references = [[[self.a.index2word[idx] for idx in line]] for line in true_epoch]
+        hypotheses = [[self.a.index2word[idx] for idx in line] for line in predictions_epoch]
 
         bleu = bleu_score.corpus_bleu(references, hypotheses, smoothing_function=bleu_score.SmoothingFunction().method1)
 

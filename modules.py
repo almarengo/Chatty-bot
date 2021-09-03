@@ -86,7 +86,6 @@ class Decoder(nn.Module):
         # Transpose the embedded to (B x T x H)
         embedded = embedded.transpose(0, 1)
         # Sums the context and decoder input embedded (B x 1 x (H_emb + H))
-        print(embedded.size(), context.size())
         rnn_input = torch.cat([embedded, context], 2)
         # Runs the GRU layer with output (B x 1 x H)
         output, hidden = self.gru(rnn_input, last_hidden)

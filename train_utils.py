@@ -109,12 +109,12 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
+        encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(pairs, q, a, st, ed, perm, device)
 
         dec_len = decoder_in.size()[1]
 
         # Calculate outputs (make predictions)
-        predictions = model.predict(encoder_in, dec_len = dec_len, seq_length=seq_length)
+        predictions = model.predict(encoder_in, enc_length, dec_len = dec_len, seq_length=seq_length)
 
         # Getting the true answer from the pairs (answers are at index 1 for each row)
         true_batch = []
@@ -124,7 +124,7 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
             for word in pairs[idx][1].split():
                 row_list.append(a.word2index[word])
             true_batch.append(row_list)
-
+        
         # Calculate the error for each batch
         error = model.check_acc(predictions, true_batch)
 
