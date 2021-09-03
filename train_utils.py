@@ -4,7 +4,7 @@ from torch import nn
 import torch.nn.functional as F
 
 
-def epoch_train(model, optimizer, batch_size, pairs, q, device):
+def epoch_train(model, optimizer, batch_size, pairs, q, a, device):
     
     # Set the model in train mode
     model.train()
@@ -29,7 +29,7 @@ def epoch_train(model, optimizer, batch_size, pairs, q, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(pairs, q, st, ed, perm, device)
+        encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(pairs, q, a, st, ed, perm, device)
 
         # Calculate outputs and loss
         output_values, output_values_loss_inp = model(encoder_in, decoder_in, enc_length, seq_length)
@@ -51,7 +51,7 @@ def epoch_train(model, optimizer, batch_size, pairs, q, device):
 
 
 
-def to_batch_sequence(pairs, q, st, ed, perm, device):
+def to_batch_sequence(pairs, q, a, st, ed, perm, device):
     
     encoder_in = []
     decoder_in = []
@@ -62,7 +62,7 @@ def to_batch_sequence(pairs, q, st, ed, perm, device):
         decoder_in.append(pair_batch[1])
     
     encoder_in = [[q.word2index.get(idx) for idx in encoder_in[row].split()] for row in range(len(encoder_in))]
-    decoder_in = [[q.word2index.get(idx) for idx in decoder_in[row].split()] for row in range(len(decoder_in))]
+    decoder_in = [[a.word2index.get(idx) for idx in decoder_in[row].split()] for row in range(len(decoder_in))]
     
     encoder_lengths = [len(row) for row in encoder_in]
     decoder_lengths = [len(row) for row in decoder_in]

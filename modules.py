@@ -75,7 +75,7 @@ class Decoder(nn.Module):
     
     def forward(self, input, last_hidden, encoder_outputs):
         
-        # Reads input size (B x 1) and embed to (B x 1 x H_emb)
+        # Reads input size (1 x B) and embed to (B x 1 x H_emb)
         embedded = self.embedding(input)
         # Apply dropout
         embedded = self.dropout(embedded)
