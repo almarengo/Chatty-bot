@@ -16,7 +16,7 @@ class Seq2Seq(nn.Module):
         self.output_size = output_size
         self.device = device
         self.criterion = criterion
-        self.softmax = nn.Softmax(dim=1)
+        self.softmax = nn.LogSoftmax(dim=1)
         self.SOS_token = 0
         self.EOS_token = 1
 
@@ -42,7 +42,7 @@ class Seq2Seq(nn.Module):
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                decoder_output = assign_EOS(decoder_output, batch_size, seq_length, inp)
+                #decoder_output = assign_EOS(decoder_output, batch_size, seq_length, inp)
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
                 decoder_outputs[:, inp, :] = decoder_output
@@ -53,7 +53,7 @@ class Seq2Seq(nn.Module):
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                decoder_output = assign_EOS(decoder_output, batch_size, seq_length, inp)
+                #decoder_output = assign_EOS(decoder_output, batch_size, seq_length, inp)
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
                 decoder_outputs[:, inp, :] = decoder_output
@@ -110,7 +110,7 @@ class Seq2Seq(nn.Module):
             for inp in range(max_length):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                decoder_output = assign_EOS(decoder_output, batch_size, seq_length, inp)
+                #decoder_output = assign_EOS(decoder_output, batch_size, seq_length, inp)
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
                 topv, topi = decoder_output.topk(1)
@@ -129,7 +129,7 @@ class Seq2Seq(nn.Module):
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                decoder_output = assign_EOS(decoder_output, batch_size, seq_length, inp)
+                #decoder_output = assign_EOS(decoder_output, batch_size, seq_length, inp)
                 
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
@@ -138,11 +138,11 @@ class Seq2Seq(nn.Module):
                 
                 topv, topi = decoder_output.topk(1)
                 decoder_input = topi.transpose(0, 1).detach()
-
+            
                 prediction = torch.cat([prediction, topi], dim=-1)
 
             prediction = prediction[:, 1:].cpu().numpy().tolist()
-
+            
             ret_pred = [word[:length+1] for word, length in zip(prediction, seq_length)]
         
         return ret_pred
