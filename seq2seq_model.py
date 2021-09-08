@@ -77,14 +77,19 @@ class Seq2Seq(nn.Module):
         return loss
 
 
-    def check_acc(self, preditions, true_seq):
+    def check_acc(self, predictions, true_seq):
 
-        error = 0
-        for b, (pred_seq, gt_seq) in enumerate(zip(preditions, true_seq)):
-            if pred_seq != gt_seq:
-                error += 1
+        batch_acc_list = []
+        batch_acc = 0
+        for b, (pred_seq, gt_seq) in enumerate(zip(predictions, true_seq)):
+            good = 0
+            for pred_tok, gt_tok in zip(pred_seq, gt_seq):
+                len_seq = len(pred_seq)
+                if pred_tok == gt_tok:
+                    good += 1
+            batch_acc_list.append(good/len_seq)
         
-        return error
+        return sum(batch_acc_list)/b
 
 
     def predict(self, src, enc_length, dec_len=None, seq_length=None, max_length=50):
