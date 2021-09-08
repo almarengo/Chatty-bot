@@ -4,14 +4,14 @@ from torch import nn
 import torch.nn.functional as F
 
 
-def epoch_train(model, optimizer, batch_size, pairs, q, a, device):
+def epoch_train(model, optimizer, batch_size, pairs, q, a, lr, device):
     
     # Set the model in train mode
     model.train()
     if optimizer == 'Adam':
-        optimizer = torch.optim.Adam(model.parameters(), lr=0.0001)
+        optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     else:
-        optimizer = torch.optim.SDG(model.parameters(), lr=0.0001)
+        optimizer = torch.optim.SDG(model.parameters(), lr=lr)
     # Clear gradients (pytorch accumulates gradients by default)
     optimizer.zero_grad() 
     
