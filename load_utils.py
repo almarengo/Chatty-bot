@@ -63,8 +63,8 @@ def load_glove(file_path, small=True):
     words = []
     with open(file_path, encoding='utf8') as lines:
         for line in lines:
-            # Load only 5000 words is small is called
-            if small and idx > 5000:
+            # Load only 10000 words if small is called
+            if small and idx > 20000:
                 break
             # Split the line at the spaces and create a list where first is word and next is the word embedding vectors
             line = line.split()
@@ -119,6 +119,9 @@ def Read_data(dataset,  glove_file_path, small):
     # Pad empty sentences
     pairs = [['PAD', line[1]] if line[0] == '' else line for line in pairs]
     pairs = [[line[0], 'PAD'] if line[1] == '' else line for line in pairs]
+    # Pad spaces
+    pairs = [['PAD', line[1]] if line[0] == ' ' else line for line in pairs]
+    pairs = [[line[0], 'PAD'] if line[1] == ' ' else line for line in pairs]
     # Add EOS at end of each target sentence
     pairs = [[line[0], line[1]+' EOS'] for line in pairs ]
     # Load GloVe vectors
