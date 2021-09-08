@@ -11,7 +11,7 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, lr, device):
     if optimizer == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     else:
-        optimizer = torch.optim.SDG(model.parameters(), lr=lr)
+        optimizer = torch.optim.SGD(model.parameters(), lr=lr)
     # Clear gradients (pytorch accumulates gradients by default)
     optimizer.zero_grad() 
     
