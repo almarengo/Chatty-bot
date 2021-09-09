@@ -71,7 +71,7 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
     max_decoder_length = max(decoder_lengths)
     
     encoder_in_tensor = torch.zeros(ed-st, max_encoder_length, dtype=torch.long, device=device)
-    decoder_in_tensor = torch.zeros(ed-st, max_decoder_length, dtype=torch.long, device=device)
+    decoder_in_tensor = torch.ones(ed-st, max_decoder_length, dtype=torch.long, device=device)
     
     for i, seq in enumerate(encoder_in):
         for t, word in enumerate(seq):
