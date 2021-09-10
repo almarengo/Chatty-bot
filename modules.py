@@ -44,7 +44,7 @@ class Attention(nn.Module):
         encoder_outputs = self.attn(encoder_outputs)
         # Transpose the encoder_outputs to (B x H x T)
         encoder_outputs = encoder_outputs.transpose(1, 2)
-        # Transpose the hidden to (B x T x H)
+        # Transpose the hidden to (1 x B x H)
         hidden = hidden.transpose(0, 1)
         # Multiply encoder_outputs and the last hidden state to obtain (B x 1 x T)
         energy = torch.bmm(hidden, encoder_outputs)
@@ -75,7 +75,7 @@ class Decoder(nn.Module):
     
     def forward(self, input, last_hidden, encoder_outputs):
         
-        # Reads input size (1 x B) and embed to (B x 1 x H_emb)
+        # Reads input size (1 x B) and embed to (1 x B x H_emb)
         embedded = self.embedding(input)
         # Apply dropout
         embedded = self.dropout(embedded)
