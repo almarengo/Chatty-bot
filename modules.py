@@ -126,6 +126,8 @@ class AttentionDecoder(nn.Module):
         embedded = self.dropout(embedded)
         # Sums the embedded and hidden (1 x B x (H_emb + H)) and pass it through a linear layer (1 x B x H)
         attn_embedded = self.attn(torch.cat([embedded, last_hidden], 2))
+        # Transpose attn_embedded to (B x 1 x H)
+        attn_embedded = attn_embedded.transpose(0, 1)
         # Multiply the attention embedded by the encoder_outputs (B x 1 x H) x (B x H x T) = (B x 1 x T)
         att_score = attn_embedded.bmm(encoder_outputs.transpose(1, 2))
         # Squeeze to (B x T)
