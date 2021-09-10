@@ -138,6 +138,8 @@ class AttentionDecoder(nn.Module):
         attn_weights = attn_weights.unsqueeze(1)
         # Multiply the attention weights by the encoder_outputs (B x 1 x T) x (B x T x H) = (B x 1 x H)
         att_applied = attn_weights.bmm(encoder_outputs)
+        # Transpose aembedded to (B x 1 x H_emb)
+        embedded = embedded.transpose(0, 1)
         # Sums the att_applied and decoder input embedded (B x 1 x (H_emb + H))
         rnn_input = torch.cat([embedded, att_applied], 2)
         # Runs the rnn_input through a linear layer (B x 1 x H)
