@@ -12,8 +12,6 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, lr, device):
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     else:
         optimizer = torch.optim.SGD(model.parameters(), lr=lr)
-    # Clear gradients (pytorch accumulates gradients by default)
-    optimizer.zero_grad() 
     
     # Gets number total number of rows for training
     n_records = len(pairs)
@@ -35,6 +33,9 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, lr, device):
         output_values, output_values_loss_inp = model(encoder_in, decoder_in, enc_length, seq_length)
         
         loss = model.loss(output_values_loss_inp, decoder_in)
+
+        # Clear gradients (pytorch accumulates gradients by default)
+        optimizer.zero_grad() 
 
         # Backpropagation & weight adjustment
         loss.backward()
