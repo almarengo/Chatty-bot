@@ -148,6 +148,8 @@ class AttentionDecoder(nn.Module):
         rnn_input = self.relu(rnn_input)
         # Runs the GRU layer with output (B x 1 x H)
         output, hidden = self.gru(rnn_input, last_hidden)
+        # Squeeze decoder output to (B x H)
+        output = output.squeeze(1)
         # Runs the output through a linear layer (B x N_out)
         output = self.out(output)
         
