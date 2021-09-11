@@ -125,8 +125,8 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
             for word in pairs[idx][1].split():
                 row_list.append(a.word2index[word])
             true_batch.append(row_list)
-        print(true_batch)
-        print(predictions)
+        #print(true_batch)
+        #print(predictions)
         # Calculate the error for each batch
         batch_acc = model.check_acc(predictions, true_batch)
 
