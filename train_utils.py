@@ -72,7 +72,7 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
     max_decoder_length = max(decoder_lengths)
     
     encoder_in_tensor = torch.zeros(ed-st, max_encoder_length, dtype=torch.long, device=device)
-    decoder_in_tensor = torch.zeros(ed-st, max_decoder_length, dtype=torch.long, device=device)
+    decoder_in_tensor = torch.ones(ed-st, max_decoder_length, dtype=torch.long, device=device)
     
     for i, seq in enumerate(encoder_in):
         for t, word in enumerate(seq):
@@ -100,7 +100,7 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
     n_records = len(pairs)
     
     # Shuffle the row indexes 
-    perm = np.random.permutation(n_records)
+    indexes = np.array(range(n_records))
     
     st = 0
 
@@ -110,7 +110,7 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(pairs, q, a, st, ed, perm, device)
+        encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(pairs, q, a, st, ed, indexes, device)
 
         dec_len = decoder_in.size()[1]
 
@@ -125,7 +125,8 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
             for word in pairs[idx][1].split():
                 row_list.append(a.word2index[word])
             true_batch.append(row_list)
-        
+        print(true_batch)
+        print(predictions)
         # Calculate the error for each batch
         batch_acc = model.check_acc(predictions, true_batch)
 

@@ -36,7 +36,7 @@ class Output_lang:
     def __init__(self, name):
         self.name = name
         self.word_count = {}
-        self.word2index = {}
+        self.word2index = {'SOS': 0, 'EOS': 1}
         self.n_words = 2
         self.index2word = {0: 'SOS', 1: 'EOS'}
         
@@ -122,8 +122,6 @@ def Read_data(dataset,  glove_file_path, small):
     # Pad spaces
     pairs = [['PAD', line[1]] if line[0] == ' ' else line for line in pairs]
     pairs = [[line[0], 'PAD'] if line[1] == ' ' else line for line in pairs]
-    # Add EOS at end of each target sentence
-    pairs = [[line[0], line[1]+' EOS'] for line in pairs ]
     # Load GloVe vectors
     glove_vectors, glove_word2idx = load_glove(glove_file_path, small)
     # Initialize the classes questions and answers to assign indexes and count the words

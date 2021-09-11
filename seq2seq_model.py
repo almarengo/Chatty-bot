@@ -148,7 +148,7 @@ class Seq2Seq(nn.Module):
 
             prediction = prediction[:, 1:].cpu().numpy().tolist()
             
-            ret_pred = [word[:length+1] for word, length in zip(prediction, seq_length)]
+            ret_pred = [word[:length] for word, length in zip(prediction, seq_length)]
         
         return ret_pred
                 

@@ -30,6 +30,6 @@ def assign_EOS(vector, seq_length, current_step):
 
     for idx, num in enumerate(seq_length):
         if num < current_step:
-            vector[idx, 1] = 100
+            vector[idx, 1] = 1
     return vector
 
