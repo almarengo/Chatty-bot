@@ -42,7 +42,7 @@ class Seq2Seq(nn.Module):
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                decoder_output = assign_EOS(decoder_output, seq_length, inp)
+                #decoder_output = assign_EOS(decoder_output, seq_length, inp)
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
                 decoder_outputs[:, inp, :] = decoder_output
@@ -53,7 +53,7 @@ class Seq2Seq(nn.Module):
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                decoder_output = assign_EOS(decoder_output, seq_length, inp)
+                #decoder_output = assign_EOS(decoder_output, seq_length, inp)
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
                 decoder_outputs[:, inp, :] = decoder_output
@@ -115,7 +115,7 @@ class Seq2Seq(nn.Module):
             for inp in range(max_length):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                decoder_output = assign_EOS(decoder_output, seq_length, inp)
+                #decoder_output = assign_EOS(decoder_output, seq_length, inp)
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
                 topv, topi = decoder_output.topk(1)
@@ -134,7 +134,7 @@ class Seq2Seq(nn.Module):
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                decoder_output = assign_EOS(decoder_output, seq_length, inp)
+                #decoder_output = assign_EOS(decoder_output, seq_length, inp)
                 
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
