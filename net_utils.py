@@ -19,7 +19,7 @@ def run_lstm(lstm, inp, inp_len, device, hidden=None):
         lstm_hidden = None
     else:
         #lstm_hidden = (hidden[0][:, sort_perm], hidden[1][:, sort_perm])
-        lstm_hidden = hidden
+        lstm_hidden = hidden[:, sort_perm]
 
     sort_ret_s, sort_ret_h = lstm(lstm_inp, lstm_hidden)
     ret_s = nn.utils.rnn.pad_packed_sequence(sort_ret_s, batch_first=True)[0][sort_perm_inv]
