@@ -26,10 +26,12 @@ class Seq2Seq(nn.Module):
         batch_size = src.size()[0]
 
         dec_len = trg.size()[1]
+
+        encoder_hidden = self.encoder.initHidden()
         
         decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
         
-        encoder_outputs, encoder_hidden = self.encoder(src, enc_length)
+        encoder_outputs, encoder_hidden = self.encoder(src, enc_length, hidden=encoder_hidden)
         
         decoder_input = torch.tensor([batch_size*[self.SOS_token]], device = self.device)
         decoder_hidden = encoder_hidden

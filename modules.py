@@ -26,6 +26,10 @@ class Encoder(nn.Module):
         
         return output, hidden
     
+    def initHidden(self):
+
+        return torch.zeros(1, self.batch_size, self.hidden_size, device=self.device)
+    
 
 
 
