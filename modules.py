@@ -13,6 +13,7 @@ class Encoder(nn.Module):
         self.hidden_size = hidden_size
         self.embedding_dim = embedding_dim
         self.embedding = nn.Embedding(vocabolary_size, embedding_dim, device=device)
+        weights_matrix = torch.tensor(weights_matrix, device = device)
         self.embedding.load_state_dict({'weight': weights_matrix})
         self.embedding.weight.requires_grad = False
         self.embedding.to(device)
