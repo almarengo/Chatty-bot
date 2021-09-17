@@ -15,7 +15,7 @@ class Encoder(nn.Module):
         self.embedding = nn.Embedding(vocabolary_size, embedding_dim, device=device)
         weights_matrix = torch.tensor(weights_matrix, device = device)
         self.embedding.load_state_dict({'weight': weights_matrix})
-        self.embedding.weight.requires_grad = False
+        self.embedding.weight.requires_grad = True
         self.embedding.to(device)
         #self.embedding.from_pretrained(torch.from_numpy(weights_matrix).to(device))
         self.gru = nn.GRU(embedding_dim, hidden_size, dropout=dropout, batch_first=True).to(device)
