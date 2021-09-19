@@ -63,8 +63,8 @@ def load_glove(file_path, small=True):
     words = []
     with open(file_path, encoding='utf8') as lines:
         for line in lines:
-            # Load only 10000 words if small is called
-            if small and idx > 10000:
+            # Load only 5000 words if small is called
+            if small and idx > 5000:
                 break
             # Split the line at the spaces and create a list where first is word and next is the word embedding vectors
             line = line.split()
