@@ -21,7 +21,7 @@ class Seq2Seq(nn.Module):
         self.EOS_token = 1
 
     
-    def forward(self, src, trg, enc_length, seq_length, teacher_forcing_ratio = 0.5):
+    def forward(self, src, trg, enc_length, seq_length, teacher_forcing_ratio = 0.8):
 
         batch_size = src.size()[0]
 
