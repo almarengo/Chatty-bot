@@ -121,7 +121,8 @@ class AttentionDecoder(nn.Module):
         self.attn = nn.Linear(hidden_size+embedding_dim, hidden_size, device=device)
         self.attn_combine = nn.Linear(hidden_size+embedding_dim, hidden_size, device=device)
         self.gru = nn.GRU(hidden_size, hidden_size, dropout=dropout, batch_first=True).to(device)
-        self.out = nn.Linear(hidden_size, output_size, device=device)
+        #self.out = nn.Linear(hidden_size, output_size, device=device)
+        self.out = nn.Sequential(nn.Tanh(), nn.Linear(hidden_size, output_size, device=device))
         self.softmax = nn.Softmax(dim=1)
         self.relu = nn.ReLU()
         
