@@ -169,7 +169,7 @@ class AttentionDecoder_base(nn.Module):
     
     def __init__(self, embedding_dim, hidden_size, output_size, dropout, device):
         
-        super(AttentionDecoder, self).__init__()
+        super(AttentionDecoder_base, self).__init__()
         
         self.embedding_dim = embedding_dim
         self.hidden_size = hidden_size
