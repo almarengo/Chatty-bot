@@ -186,9 +186,10 @@ class AttentionDecoder_base(nn.Module):
         self.relu = nn.ReLU()
         
     
-    def forward(self, input, last_hidden, encoder_outputs, dec_len):
+    def forward(self, input, last_hidden, encoder_outputs):
 
-        attn = nn.Linear(self.hidden_size+self.embedding_dim, dec_len, device=self.device)
+        enc_len = encoder_outputs.size()[1]
+        attn = nn.Linear(self.hidden_size+self.embedding_dim, enc_len, device=self.device)
         # Reads input size (1 x B) and embed to (1 x B x H_emb)
         embedded = self.embedding(input)
         # Apply dropout
@@ -200,7 +201,7 @@ class AttentionDecoder_base(nn.Module):
         # Returns the softmax function (B x T)
         attn_weights = self.softmax(attn_embedded)
         # Unsqueeze (B x 1 x T)
-        attn_weights = attn_weights.unsqueeze(1)
+        #attn_weights = attn_weights.unsqueeze(1)
         # Multiply the attention weights by the encoder_outputs (B x 1 x T) x (B x T x H) = (B x 1 x H)
         att_applied = attn_weights.bmm(encoder_outputs)
         # Transpose aembedded to (B x 1 x H_emb)

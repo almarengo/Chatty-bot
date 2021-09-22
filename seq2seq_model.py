@@ -54,8 +54,7 @@ class Seq2Seq(nn.Module):
                 decoder_input = trg[:, inp].unsqueeze(0)
         else:
             for inp in range(dec_len):
-                #decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
-                decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs, dec_len)
+                decoder_output, decoder_hidden, decoder_attention = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
                 #decoder_output = assign_EOS(decoder_output, seq_length, inp)
                 # Runs output through softmax
