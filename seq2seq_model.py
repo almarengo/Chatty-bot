@@ -18,7 +18,7 @@ class Seq2Seq(nn.Module):
         self.output_size = output_size
         self.device = device
         self.criterion = criterion
-        self.softmax = nn.LogSoftmax(dim=1)
+        self.softmax = nn.Softmax(dim=1)
         self.SOS_token = 0
         self.EOS_token = 1
         self.PAD_token = 2
