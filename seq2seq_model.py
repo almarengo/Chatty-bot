@@ -1,5 +1,6 @@
 import random
 import torch
+import numpy as np
 from torch import nn
 import torch.nn.functional as F
 from modules import *
@@ -12,14 +13,15 @@ class Seq2Seq(nn.Module):
         super(Seq2Seq, self).__init__()
         
         self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, device)
-        #self.decoder = AttentionDecoder(embedding_dim, hidden_size, output_size, dropout, device)
-        self.decoder = AttentionDecoder_base(embedding_dim, hidden_size, output_size, dropout, device)
+        self.decoder = AttentionDecoder(embedding_dim, hidden_size, output_size, dropout, device)
+        #self.decoder = AttentionDecoder_base(embedding_dim, hidden_size, output_size, dropout, device)
         self.output_size = output_size
         self.device = device
         self.criterion = criterion
         self.softmax = nn.LogSoftmax(dim=1)
         self.SOS_token = 0
         self.EOS_token = 1
+        self.PAD_token = 2
 
     
     def forward(self, src, trg, enc_length, seq_length, teacher_forcing_ratio = 0.8):
@@ -70,14 +72,23 @@ class Seq2Seq(nn.Module):
 
 
 
-    def loss(self, decoder_outputs_list, trg):
+    def loss(self, decoder_outputs_list, trg, mask):
 
+        print_losses = []
+        n_totals = 0
         dec_len = trg.size()[1]
         loss = 0
         for idx in range(dec_len):
-            loss += self.criterion(decoder_outputs_list[idx], trg[:, idx].squeeze()) 
+            nTotal = mask[:, idx].sum().item()
+            #loss += self.criterion(decoder_outputs_list[idx], trg[:, idx].squeeze())
+            crossEntropy = -torch.log(torch.gather(decoder_outputs_list[idx], 1, trg[:, idx].view(-1, 1)).squeeze(1)) 
+            #crossEntropy = self.criterion(decoder_outputs_list[idx], trg[:, idx].squeeze())
+            lossi = crossEntropy.masked_select(mask[:, idx].view(-1, 1)).mean()
+            loss += lossi
+            n_totals += nTotal
+            print_losses.append(lossi.item()*nTotal)
 
-        return loss
+        return loss, sum(print_losses)/n_totals
 
 
     def check_acc(self, predictions, true_seq):

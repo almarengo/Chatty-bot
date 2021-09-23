@@ -23,12 +23,12 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(pairs, q, a, st, ed, perm, device)
+        encoder_in, decoder_in, enc_length, seq_length, mask = to_batch_sequence(pairs, q, a, st, ed, perm, device)
 
         # Calculate outputs and loss
         output_values, output_values_loss_inp = model(encoder_in, decoder_in, enc_length, seq_length)
         
-        loss = model.loss(output_values_loss_inp, decoder_in)
+        loss, print_loss = model.loss(output_values_loss_inp, decoder_in, mask)
 
         # Clear gradients (pytorch accumulates gradients by default)
         optimizer.zero_grad() 
@@ -36,11 +36,12 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, device):
         # Backpropagation & weight adjustment
         loss.backward()
 
+        # Clip gradient
+        _ = nn.utils.clip_grad_norm_(model.parameters(), 50.0)
+
         optimizer.step()
 
-        loss = loss.item()/decoder_in.size()[1]
-
-        cum_loss += loss*(ed - st)
+        cum_loss += print_loss*(ed - st)
 
         st = ed
 
@@ -49,6 +50,8 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, device):
 
 
 def to_batch_sequence(pairs, q, a, st, ed, perm, device):
+
+    PAD_token = 2
     
     encoder_in = []
     decoder_in = []
@@ -60,7 +63,7 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
     
     encoder_in = [[q.word2index.get(idx) for idx in encoder_in[row].split()] for row in range(len(encoder_in))]
     decoder_in = [[a.word2index.get(idx) for idx in decoder_in[row].split()] for row in range(len(decoder_in))]
-    
+
     encoder_lengths = [len(row) for row in encoder_in]
     decoder_lengths = [len(row) for row in decoder_in]
     
@@ -68,7 +71,7 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
     max_decoder_length = max(decoder_lengths)
     
     encoder_in_tensor = torch.zeros(ed-st, max_encoder_length, dtype=torch.long, device=device)
-    decoder_in_tensor = torch.ones(ed-st, max_decoder_length, dtype=torch.long, device=device)
+    decoder_in_tensor = torch.zeros(ed-st, max_decoder_length, dtype=torch.long, device=device)
     
     for i, seq in enumerate(encoder_in):
         for t, word in enumerate(seq):
@@ -83,7 +86,14 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
     encoder_lengths = np.array(encoder_lengths)
     decoder_lengths = np.array(decoder_lengths)
 
-    return encoder_in_tensor, decoder_in_tensor, encoder_lengths, decoder_lengths
+    for idx, num in enumerate(decoder_lengths):
+        if num < max_decoder_length:
+            decoder_in_tensor[idx, num:] = PAD_token
+
+    # Creates a mask for padding
+    mask = torch.where(decoder_in_tensor == PAD_token, 0, 1).to(torch.bool)
+
+    return encoder_in_tensor, decoder_in_tensor, encoder_lengths, decoder_lengths, mask
 
 
 
@@ -106,7 +116,7 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(pairs, q, a, st, ed, indexes, device)
+        encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(pairs, q, a, st, ed, indexes, device)
 
         dec_len = decoder_in.size()[1]
 

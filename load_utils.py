@@ -36,9 +36,9 @@ class Output_lang:
     def __init__(self, name):
         self.name = name
         self.word_count = {}
-        self.word2index = {'SOS': 0, 'EOS': 1}
-        self.n_words = 2
-        self.index2word = {0: 'SOS', 1: 'EOS'}
+        self.word2index = {'SOS': 0, 'EOS': 1, 'PAD': 2}
+        self.n_words = 3
+        self.index2word = {0: 'SOS', 1: 'EOS', 2: 'PAD'}
         
     
     def add_word(self, word):
@@ -117,11 +117,11 @@ def Read_data(dataset,  glove_file_path, small):
     # Creates a pair of question-answer as a list of list
     pairs = [[sentence_cleaning(question), sentence_cleaning(answer)] for question, answer in zip(source_sentences, target_sentences)]
     # Pad empty sentences
-    pairs = [['PAD', line[1]] if line[0] == '' else line for line in pairs]
-    pairs = [[line[0], 'PAD'] if line[1] == '' else line for line in pairs]
+    pairs = [['EMPTY', line[1]] if line[0] == '' else line for line in pairs]
+    pairs = [[line[0], 'EMPTY'] if line[1] == '' else line for line in pairs]
     # Pad spaces
-    pairs = [['PAD', line[1]] if line[0] == ' ' else line for line in pairs]
-    pairs = [[line[0], 'PAD'] if line[1] == ' ' else line for line in pairs]
+    pairs = [['EMPTY', line[1]] if line[0] == ' ' else line for line in pairs]
+    pairs = [[line[0], 'EMPTY'] if line[1] == ' ' else line for line in pairs]
     # Load GloVe vectors
     glove_vectors, glove_word2idx = load_glove(glove_file_path, small)
     # Initialize the classes questions and answers to assign indexes and count the words
