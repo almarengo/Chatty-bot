@@ -51,7 +51,7 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, device):
 
 def to_batch_sequence(pairs, q, a, st, ed, perm, device):
 
-    PAD_token = 2
+    PAD_token = 0
     
     encoder_in = []
     decoder_in = []

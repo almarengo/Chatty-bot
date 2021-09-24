@@ -36,9 +36,9 @@ class Output_lang:
     def __init__(self, name):
         self.name = name
         self.word_count = {}
-        self.word2index = {'SOS': 0, 'EOS': 1, 'PAD': 2}
+        self.word2index = {'PAD': 0, 'SOS': 1, 'EOS': 2}
         self.n_words = 3
-        self.index2word = {0: 'SOS', 1: 'EOS', 2: 'PAD'}
+        self.index2word = {0: 'PAD', 1: 'SOS', 2: 'EOS'}
         
     
     def add_word(self, word):
