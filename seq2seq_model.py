@@ -8,12 +8,13 @@ from net_utils import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, output_size, embedding_dim, hidden_size, weights_matrix, dropout, device, criterion):
+    def __init__(self, batch_size, vocabolary_size, output_size, embedding_dim, hidden_size, weights_matrix, dropout, method, device, criterion):
         
         super(Seq2Seq, self).__init__()
         
         self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, device)
-        self.decoder = AttentionDecoder(embedding_dim, hidden_size, output_size, dropout, device)
+        self.decoder = AttentionDecoder(embedding_dim, hidden_size, output_size, dropout, method, device)
+        #self.decoder = AttentionDecoder(embedding_dim, hidden_size, output_size, dropout, device)
         #self.decoder = AttentionDecoder_base(embedding_dim, hidden_size, output_size, dropout, device)
         self.output_size = output_size
         self.device = device
