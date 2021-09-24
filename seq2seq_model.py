@@ -142,7 +142,7 @@ class Seq2Seq(nn.Module):
             
 
         else:
-            prediction = torch.zeros((batch_size, dec_len), device=self.device)
+            prediction = torch.zeros((batch_size, dec_len), dtype=torch.long, device=self.device)
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
                 # Assigns max prob to position 1 (EOS) to words at end of sequence 
