@@ -103,7 +103,7 @@ class Decoder(nn.Module):
         self.embedding = nn.Embedding(output_size, self.embedding_dim, device=device)
         self.dropout = nn.Dropout(dropout, inplace=True)
         self.attention = Attention(hidden_size, method, device)
-        self.gru = nn.GRU(hidden_size+embedding_dim, hidden_size, dropout=dropout, batch_first=True).to(device)
+        self.gru = nn.GRU(embedding_dim, hidden_size, dropout=dropout, batch_first=True).to(device)
         self.concat = nn.Linear(hidden_size*2, hidden_size, device=device)
         self.out = nn.Linear(hidden_size, output_size, device=device)
         self.tan = nn.Tanh()
@@ -115,6 +115,8 @@ class Decoder(nn.Module):
         embedded = self.embedding(input)
         # Apply dropout
         embedded = self.dropout(embedded)
+        # Transpose embedded (B x 1 x H_emb)
+        embedded =embedded.transpose(0, 1)
         # Runs the GRU layer with output (B x 1 x H)
         rnn_output, hidden = self.gru(embedded, last_hidden)
         # Apply attention using encoder_outputs and the last hidden state (B x T)
