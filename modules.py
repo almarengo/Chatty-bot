@@ -44,6 +44,7 @@ class Attention(nn.Module):
         super(Attention, self).__init__()
 
         self.method = method
+        self.device = device
         if self.method not in ['dot', 'general', 'concat']:
             raise ValueError(self.method, 'is not an implemented in this model')
         self.hidden_size = hidden_size
@@ -68,7 +69,7 @@ class Attention(nn.Module):
         # Pass results through a linear layer to (B x T x H) and tanh activation function
         energy = self.attn(torch.cat((hidden.expand(-1, encoder_outputs.size(1), -1), encoder_outputs), 2)).tanh()
         # Multiply scalar v and energy (H)*(B x T x H) = (B x T x H) and sums along last dimension to (B x T)
-        return torch.sum(self.v*energy, dim=2)
+        return torch.sum(self.v.to(self.device)*energy, dim=2)
 
         
     def forward(self, hidden, encoder_outputs):
