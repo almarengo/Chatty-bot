@@ -117,9 +117,9 @@ if __name__ == '__main__':
     max_plot2 = 0
     
 
-    for epoch in tqdm(n_epochs, desc="Total epochs: "):
+    for epoch in tqdm(range(1, n_epochs), desc="Total epochs: "):
 
-        print(f'Epoch {epoch + 1}: {datetime.datetime.now()}')
+        print(f'Epoch {epoch}: {datetime.datetime.now()}')
 
         # Calculte loss
         loss = epoch_train(model, optimizer, batch_size, train_pairs, q, a, device)
