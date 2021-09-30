@@ -119,7 +119,7 @@ if __name__ == '__main__':
     max_plot2 = 0
     
 
-    for epoch in tqdm(4000, desc="Total epochs: "):
+    for epoch in tqdm(n_epochs, desc="Total epochs: "):
 
         print(f'Epoch {epoch + 1}: {datetime.datetime.now()}')
 
