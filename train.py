@@ -6,11 +6,9 @@ import torch
 from tqdm import tqdm
 from Calculate_BLEU import *
 import matplotlib.pyplot as plt
-import matplotlib.animation as animation
 import datetime
 import argparse
-import time
-import random
+
 
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
