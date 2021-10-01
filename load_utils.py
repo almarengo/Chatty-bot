@@ -57,10 +57,9 @@ class Output_lang:
 
 
 def load_glove(file_path, small=True):
-    idx = 0
+    idx = 1
     vectors = {}
     word2idx = {}
-    words = []
     with open(file_path, encoding='utf8') as lines:
         for line in lines:
             # Load only 10000 words if small is called
@@ -73,6 +72,9 @@ def load_glove(file_path, small=True):
             # Assign dict key to the word in the line and value a numpay array of the word (embedding from GloVe) 
             vectors[line[0].lower()] = np.array(list(line[1:]), dtype='float')
             idx += 1
+            embed_dim = len(list(line[1:]))
+    vectors[0] = np.zeros(embed_dim, dtype='float')
+    word2idx['PAD'] = 0
     return vectors, word2idx
 
 

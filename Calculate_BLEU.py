@@ -20,7 +20,7 @@ class CalculateBleu():
         n_records = len(self.pairs)
         
         # Shuffle the row indexes 
-        perm = np.random.permutation(n_records)
+        indexes = np.array(range(n_records))
         
         st = 0
 
@@ -31,7 +31,7 @@ class CalculateBleu():
             
             ed = st + self.batch_size if (st + self.batch_size) < n_records else n_records
         
-            encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(self.pairs, self.q, self.a, st, ed, perm, self.device)
+            encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(self.pairs, self.q, self.a, st, ed, indexes, self.device)
 
             dec_len = decoder_in.size()[1]
 

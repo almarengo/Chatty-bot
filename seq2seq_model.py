@@ -111,16 +111,18 @@ class Seq2Seq(nn.Module):
 
         batch_size = src.size()[0]
 
-        enc_len = enc_length
+        is_pred = batch_size == 1
 
-        decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
+        enc_len = enc_length
+        
+        if not is_pred:
+            decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
         
         encoder_outputs, encoder_hidden = self.encoder(src, enc_len)
         
         decoder_input = torch.tensor([batch_size*[self.SOS_token]], device = self.device)
         decoder_hidden = encoder_hidden
 
-        is_pred = batch_size == 1
 
         if is_pred:
             prediction = []

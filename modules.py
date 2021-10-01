@@ -25,8 +25,11 @@ class Encoder(nn.Module):
         
         # Takes input size (B x T x 1) and embed to (B x T x H_emb)
         embedded = self.embedding(input)
-        # Runs it through the GRU and get: output (B x T x H) and last hidden state (1 x B x H)
-        output, hidden = run_lstm(self.gru, embedded, enc_len, self.device, hidden=hidden)
+        if embedded.size()[0] == 1:
+            output, hidden = self.gru (embedded)
+        else:
+            # Runs it through the GRU and get: output (B x T x H) and last hidden state (1 x B x H)
+            output, hidden = run_lstm(self.gru, embedded, enc_len, self.device, hidden=hidden)
         
         return output, hidden
     
