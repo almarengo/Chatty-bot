@@ -100,7 +100,7 @@ if __name__ == '__main__':
     plt.style.use('ggplot') 
 
     fig, (ax1, ax2) = plt.subplots(2, 1)
-
+    #fig.set_size_inches(15, 8.5, forward=True)
 
     line1, = ax1.plot(xdata, ydata1, color='red')
     line2, = ax2.plot(xdata, ydata2, color='blue', label='Train Accuracy')
@@ -116,8 +116,8 @@ if __name__ == '__main__':
     max_plot1 = 0
     max_plot2 = 0
     
-
-    for epoch in tqdm(range(1, n_epochs), desc="Total epochs: "):
+    #for epoch in tqdm(range(1, n_epochs+1), desc="Total epochs: "):
+    for epoch in range(1, n_epochs+1):
 
         print(f'Epoch {epoch}: {datetime.datetime.now()}')
 
@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
         print(f'Train accuracy: {train_accuracy}')
 
-        if epoch % 1 == 0:
+        if epoch % 100 == 0:
             # Calculate BLEU Score
             BLEU_model = CalculateBleu(model, batch_size, train_pairs, q, a, device)
             bleu_score = BLEU_model.score()
@@ -145,9 +145,9 @@ if __name__ == '__main__':
         if loss > max_plot1:
             max_plot1 = np.ceil(loss)
         if train_accuracy > max_plot2:
-            max_plot2 = np.ceil(train_accuracy)
+            max_plot2 = np.round(train_accuracy, decimals=1)
         if val_accuracy > max_plot2:
-            max_plot2 = np.ceil(val_accuracy)
+            max_plot2 = np.round(val_accuracy, decimals=1)
     
         xdata.append(epoch)
         ydata1.append(loss)
@@ -164,8 +164,11 @@ if __name__ == '__main__':
         ax2.set_xlim(0, epoch)
         ax2.set_ylim(0, max_plot2)
         plt.draw()
-       
+        plt.pause(5)
+
     print(f"Optimization ended successfully")
+    plt.show()   
+    
     
 
 

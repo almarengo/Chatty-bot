@@ -31,7 +31,7 @@ class CalculateBleu():
             
             ed = st + self.batch_size if (st + self.batch_size) < n_records else n_records
         
-            encoder_in, decoder_in, enc_length, seq_length = to_batch_sequence(self.pairs, self.q, self.a, st, ed, indexes, self.device)
+            encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(self.pairs, self.q, self.a, st, ed, indexes, self.device)
 
             dec_len = decoder_in.size()[1]
 
@@ -44,7 +44,10 @@ class CalculateBleu():
             for idx in range(st, ed):
                 row_list = []
                 for word in self.pairs[idx][1].split():
-                    row_list.append(self.a.word2index[word])
+                    try:
+                        row_list.append(self.a.word2index[word])
+                    except:
+                        row_list.append(self.a.word2index['UNK'])
                 true_batch.append(row_list)
             
             predictions_epoch.extend(predictions)
