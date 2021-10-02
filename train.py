@@ -81,6 +81,7 @@ if __name__ == '__main__':
     else:
         optimizer = 'Adam'
         print('Using Adam Optimizer')
+    
     batch_size = 32
     lr = 0.0005
 
@@ -131,6 +132,7 @@ if __name__ == '__main__':
         val_accuracy = epoch_accuray(model, batch_size, val_pairs, q, a, device)
 
         print(f'Train accuracy: {train_accuracy}')
+        print(f'Validation accuracy: {val_accuracy}')
 
         if epoch % 100 == 0:
             # Calculate BLEU Score
