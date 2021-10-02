@@ -129,7 +129,10 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
         for idx in range(st, ed):
             row_list = []
             for word in pairs[idx][1].split():
-                row_list.append(a.word2index[word])
+                try:
+                    row_list.append(a.word2index[word])
+                except:
+                    row_list.append(a.word2index['UNK'])
             true_batch.append(row_list)
         #print(true_batch)
         #print(predictions)

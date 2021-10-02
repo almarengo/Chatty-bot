@@ -132,7 +132,7 @@ if __name__ == '__main__':
 
         print(f'Train accuracy: {train_accuracy}')
 
-        if epoch % 100 == 0:
+        if epoch % 1 == 0:
             # Calculate BLEU Score
             BLEU_model = CalculateBleu(model, batch_size, train_pairs, q, a, device)
             bleu_score = BLEU_model.score()
