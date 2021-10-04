@@ -2,9 +2,8 @@ import random
 import torch
 import numpy as np
 from torch import nn
-import torch.nn.functional as F
-from modules.modules import *
-from utils.net_utils import *
+from model.modules.modules import *
+from model.utils.net_utils import *
 
 class Seq2Seq(nn.Module):
     

@@ -1,7 +1,7 @@
 import torch
 from torch import nn
 import torch.nn.functional as F
-from ..utils.net_utils import *
+from model.utils.net_utils import *
 
 class Encoder(nn.Module):
     

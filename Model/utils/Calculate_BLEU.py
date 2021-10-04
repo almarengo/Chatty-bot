@@ -1,5 +1,5 @@
 from nltk.translate import bleu_score
-from train_utils import *
+from model.utils.train_utils import *
 
 class CalculateBleu():
 
