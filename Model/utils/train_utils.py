@@ -1,7 +1,6 @@
 import numpy as np
 import torch
 from torch import nn
-import torch.nn.functional as F
 
 
 def epoch_train(model, optimizer, batch_size, pairs, q, a, device):

@@ -1,4 +1,4 @@
-import random
+
 import re
 import unicodedata
 import numpy as np
@@ -98,7 +98,7 @@ def sentence_cleaning(sentence):
 
 
 def load_file(name):
-    lines = open(f'data/{name}/dialogues_{name}.txt', encoding='utf-8').read().strip().split('\n')
+    lines = open(f'../../data/{name}/dialogues_{name}.txt', encoding='utf-8').read().strip().split('\n')
     return lines
 
 

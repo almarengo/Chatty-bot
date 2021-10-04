@@ -1,10 +1,10 @@
-from load_utils import prepare_data
-from train_utils import *
-from seq2seq_model import *
+from model.utils.load_utils import prepare_data
+from model.utils.train_utils import *
+from model.seq2seq_model import *
 import numpy as np
 import torch
 from tqdm import tqdm
-from Calculate_BLEU import *
+from model.utils.Calculate_BLEU import *
 import matplotlib.pyplot as plt
 import datetime
 import argparse
@@ -60,7 +60,7 @@ if __name__ == '__main__':
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    q, a, train_pairs, vector = prepare_data('train', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
+    q, a, train_pairs, vector = prepare_data('test', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
     _, _, val_pairs, _ = prepare_data('validation', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
         print(f'Train accuracy: {train_accuracy}')
         print(f'Validation accuracy: {val_accuracy}')
 
-        if epoch % 100 == 0:
+        if epoch % 1 == 0:
             # Calculate BLEU Score
             BLEU_model = CalculateBleu(model, batch_size, train_pairs, q, a, device)
             bleu_score = BLEU_model.score()

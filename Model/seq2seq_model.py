@@ -3,8 +3,8 @@ import torch
 import numpy as np
 from torch import nn
 import torch.nn.functional as F
-from modules import *
-from net_utils import *
+from modules.modules import *
+from utils.net_utils import *
 
 class Seq2Seq(nn.Module):
     

@@ -1,7 +1,6 @@
 import torch
 import torch.nn as nn
 import numpy as np
-from torch.autograd import Variable
 
 def run_lstm(lstm, inp, inp_len, device, hidden=None):
     # Run the LSTM using packed sequence.
