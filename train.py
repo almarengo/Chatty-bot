@@ -60,7 +60,7 @@ if __name__ == '__main__':
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
-    q, a, train_pairs, vector = prepare_data('test', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
+    q, a, train_pairs, vector = prepare_data('train', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
     _, _, val_pairs, _ = prepare_data('validation', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
@@ -134,7 +134,7 @@ if __name__ == '__main__':
         print(f'Train accuracy: {train_accuracy}')
         print(f'Validation accuracy: {val_accuracy}')
 
-        if epoch % 1 == 0:
+        if epoch % 100 == 0:
             # Calculate BLEU Score
             BLEU_model = CalculateBleu(model, batch_size, train_pairs, q, a, device)
             bleu_score = BLEU_model.score()
