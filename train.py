@@ -3,7 +3,6 @@ from model.utils.train_utils import *
 from model.seq2seq_model import *
 import numpy as np
 import torch
-from tqdm import tqdm
 from model.utils.Calculate_BLEU import *
 import matplotlib.pyplot as plt
 import datetime
@@ -13,7 +12,9 @@ import argparse
 if __name__ == '__main__':
     parser = argparse.ArgumentParser()
     parser.add_argument('n_epochs', type=int, default=100,
-            help='If set, number of epochs to train the model')
+            help='If set, number of epochs to train the model. Default=100')
+    parser.add_argument('batch_size', type=int, default=32,
+            help='If set, batch size to train the model. Default=32')
     parser.add_argument('--toy', action='store_true', 
             help='If set, use small data; used for fast debugging.')
     parser.add_argument('--dot', action='store_true', 
@@ -37,6 +38,13 @@ if __name__ == '__main__':
     else:
         n_epochs=100
         print(f'Epochs training: 100')
+
+    if args.batch_size:
+        batch_size=args.batch_size
+        print(f'Batch size: {args.batch_size}')
+    else:
+        batch_size=32
+        print(f'Batch size: 32')
     
     if args.toy:
         use_small=True
@@ -82,7 +90,6 @@ if __name__ == '__main__':
         optimizer = 'Adam'
         print('Using Adam Optimizer')
     
-    batch_size = 32
     lr = 0.0005
 
     model = Seq2Seq(batch_size, q.n_words, a.n_words, N_word, hidden_size, weights_matrix, dropout, att, device, _)
