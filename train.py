@@ -3,6 +3,7 @@ from model.utils.train_utils import *
 from model.seq2seq_model import *
 import numpy as np
 import torch
+torch.cuda.empty_cache()
 from model.utils.Calculate_BLEU import *
 import matplotlib.pyplot as plt
 import datetime
