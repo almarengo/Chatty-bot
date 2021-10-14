@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 
-def epoch_train(model, optimizer, batch_size, pairs, q, a, device):
+def epoch_train(model, optimizer, batch_size, pairs, q, a, device, n_gpus):
     
     # Set the model in train mode
     model.train()
@@ -24,6 +24,11 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, device):
     
         encoder_in, decoder_in, enc_length, seq_length, mask = to_batch_sequence(pairs, q, a, st, ed, perm, device)
 
+        if torch.cuda.is_available() and n_gpus > 1:
+            encoder_in = encoder_in.to(0)
+            decoder_in = decoder_in.to(0)
+            mask = mask.to(0)
+       
         # Calculate outputs and loss
         output_values, output_values_loss_inp = model(encoder_in, decoder_in, enc_length, seq_length)
         
@@ -96,7 +101,7 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
 
 
 
-def epoch_accuray(model, batch_size, pairs, q, a, device):
+def epoch_accuray(model, batch_size, pairs, q, a, device, n_gpus):
     
     # Set the model in evaluation mode
     model.eval()
@@ -116,6 +121,11 @@ def epoch_accuray(model, batch_size, pairs, q, a, device):
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
         encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(pairs, q, a, st, ed, indexes, device)
+
+        if torch.cuda.is_available() and n_gpus > 1:
+            encoder_in = encoder_in.to(0)
+            decoder_in = decoder_in.to(0)
+            mask = mask.to(0)
 
         dec_len = decoder_in.size()[1]
 

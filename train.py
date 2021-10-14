@@ -107,6 +107,17 @@ if __name__ == '__main__':
 
     model = Seq2Seq(batch_size, q.n_words, a.n_words, N_word, hidden_size, weights_matrix, dropout, att, device, _)
 
+    n_gpus = torch.cuda.device_count()
+
+    if torch.cuda.is_available() and n_gpus > 1:
+        device_ids = list(range(n_gpus))
+        model = torch.nn.DataParallel(model, device_ids=device_ids)
+        model = model.to(0)
+        print(f'Using Data Parallel on {n_gpus} GPUs')
+    else:
+        print('NOT usung Data Parallel')
+
+
     if optimizer == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     else:
@@ -143,13 +154,13 @@ if __name__ == '__main__':
         print(f'Epoch {epoch}: {datetime.datetime.now()}')
 
         # Calculte loss
-        loss = epoch_train(model, optimizer, batch_size, train_pairs, q, a, device)
+        loss = epoch_train(model, optimizer, batch_size, train_pairs, q, a, device, n_gpus)
         
         print(f'Loss: {loss}')
 
         # Calculate accuracy
-        train_accuracy = epoch_accuray(model, batch_size, train_pairs, q, a, device)
-        val_accuracy = epoch_accuray(model, batch_size, val_pairs, q, a, device)
+        train_accuracy = epoch_accuray(model, batch_size, train_pairs, q, a, device, n_gpus)
+        val_accuracy = epoch_accuray(model, batch_size, val_pairs, q, a, device, n_gpus)
 
         print(f'Train accuracy: {train_accuracy}')
         print(f'Validation accuracy: {val_accuracy}')
