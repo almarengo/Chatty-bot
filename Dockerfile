@@ -15,4 +15,4 @@ COPY . /src
 
 #ENTRYPOINT [ "python3.8", "-u", "train.py" ]
 
-CMD [ "python3.8", "-u", "train.py" ]
+#CMD [ "python3.8", "-u", "train.py" ]
