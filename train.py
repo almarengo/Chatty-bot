@@ -69,6 +69,18 @@ if __name__ == '__main__':
     
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
+    print(f'On this machine you have {device}') 
+
+    
+    print('__pyTorch VERSION:', torch.__version__)
+    print('__CUDA VERSION')
+    print('__CUDNN VERSION:', torch.backends.cudnn.version())
+    print('__Number CUDA Devices:', torch.cuda.device_count())
+    print('__Devices')
+    
+    if torch.cuda.is_available():
+        print('Active CUDA Device: GPU', torch.cuda.current_device())
+
     q, a, train_pairs, vector = prepare_data('train', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
     _, _, val_pairs, _ = prepare_data('validation', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
@@ -155,9 +167,9 @@ if __name__ == '__main__':
         if loss > max_plot1:
             max_plot1 = np.ceil(loss)
         if train_accuracy > max_plot2:
-            max_plot2 = np.round(train_accuracy, decimals=1)
+            max_plot2 = np.round(train_accuracy+0.05, decimals=1)
         if val_accuracy > max_plot2:
-            max_plot2 = np.round(val_accuracy, decimals=1)
+            max_plot2 = np.round(val_accuracy+0.05, decimals=1)
     
         xdata.append(epoch)
         ydata1.append(loss)
