@@ -16,6 +16,8 @@ if __name__ == '__main__':
             help='If set, number of epochs to train the model. Default=100')
     parser.add_argument('batch_size', type=int, default=32,
             help='If set, batch size to train the model. Default=32')
+    parser.add_argument('--pre_trained', action='store_true', 
+            help='If set, load pre-trained model.')
     parser.add_argument('--toy', action='store_true', 
             help='If set, use small data; used for fast debugging.')
     parser.add_argument('--dot', action='store_true', 
@@ -105,6 +107,13 @@ if __name__ == '__main__':
 
     model = Seq2Seq(batch_size, voc.n_words, N_word, hidden_size, weights_matrix, dropout, att, device)
 
+    if args.pre_trained:
+        print('Loading pre-trained model')
+        model.load_state_dict(torch.load('pre-trained/seq2seq_model'))
+    else:
+        print('Initializing model')
+        
+
     n_gpus = torch.cuda.device_count()
 
     if torch.cuda.is_available() and n_gpus > 1:
@@ -165,7 +174,7 @@ if __name__ == '__main__':
 
         if epoch % 100 == 0:
             # Calculate BLEU Score
-            BLEU_model = CalculateBleu(model, batch_size, train_pairs, q, a, device)
+            BLEU_model = CalculateBleu(model, batch_size, train_pairs, voc, device)
             bleu_score = BLEU_model.score()
             print(f'BLUE score: {bleu_score}')
 
