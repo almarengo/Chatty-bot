@@ -1,18 +1,20 @@
 FROM nvidia/cuda:10.1-cudnn7-runtime-ubuntu18.04
 
-RUN apt-get update && \
+RUN apt-get update -y && \
     apt-get install -y --no-install-recommends \
-    python3.8 python3-pip python3-setuptools python3-dev
-
+    python3.8 python3-pip python3-setuptools python3-dev &&\
+    apt-get install -y python3.8-tk &&\
+    apt-get remove python3-matplotlib &&\
+    apt-get install -y libx11-dev &&\
+    apt-get install -y python3-matplotlib
+ 
 
 WORKDIR /src
 
 COPY requirements.txt ./requirements.txt
 
-RUN python3.8 -m pip install --no-cache-dir -r requirements.txt
+RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 COPY . /src
 
-#ENTRYPOINT [ "python3.8", "-u", "train.py" ]
-
-#CMD [ "python3.8", "-u", "train.py" ]
+CMD [ "python3", "-u", "train.py" ]

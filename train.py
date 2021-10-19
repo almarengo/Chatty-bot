@@ -85,9 +85,6 @@ if __name__ == '__main__':
 
     _, _, val_pairs, _ = prepare_data('validation', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
-    train_pairs = [[line[0], line[1]+' EOS'] for line in train_pairs ]
-    val_pairs = [[line[0], line[1]+' EOS'] for line in val_pairs ]
-
     matrix_len = q.n_words
     weights_matrix = np.zeros((matrix_len, N_word))
     word_found = 0

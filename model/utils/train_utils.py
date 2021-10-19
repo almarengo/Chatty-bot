@@ -56,6 +56,7 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, device, n_gpus):
 def to_batch_sequence(pairs, q, a, st, ed, perm, device):
 
     PAD_token = 0
+    UNK_token = 3
     
     encoder_in = []
     decoder_in = []
@@ -65,8 +66,8 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
         encoder_in.append(pair_batch[0])
         decoder_in.append(pair_batch[1])
     
-    encoder_in = [[q.word2index.get(idx) for idx in encoder_in[row].split()] for row in range(len(encoder_in))]
-    decoder_in = [[a.word2index.get(idx) for idx in decoder_in[row].split()] for row in range(len(decoder_in))]
+    encoder_in = [[q.word2index.get(idx, UNK_token) for idx in encoder_in[row].split()] for row in range(len(encoder_in))]
+    decoder_in = [[a.word2index.get(idx, UNK_token) for idx in decoder_in[row].split()] for row in range(len(decoder_in))]
 
     encoder_lengths = [len(row) for row in encoder_in]
     decoder_lengths = [len(row) for row in decoder_in]
@@ -79,13 +80,11 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
     
     for i, seq in enumerate(encoder_in):
         for t, word in enumerate(seq):
-            if type(word) == int:
-                encoder_in_tensor[i, t] = word 
+            encoder_in_tensor[i, t] = word 
                 
     for i, seq in enumerate(decoder_in):
         for t, word in enumerate(seq):
-            if type(word) == int:
-                decoder_in_tensor[i, t] = word 
+            decoder_in_tensor[i, t] = word 
 
     encoder_lengths = np.array(encoder_lengths)
     decoder_lengths = np.array(decoder_lengths)
