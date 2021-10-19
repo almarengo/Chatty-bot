@@ -7,17 +7,16 @@ from model.utils.net_utils import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, output_size, embedding_dim, hidden_size, weights_matrix, dropout, method, device, criterion):
+    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, method, device):
         
         super(Seq2Seq, self).__init__()
         
         self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, device)
-        self.decoder = Decoder(embedding_dim, hidden_size, output_size, dropout, method, device)
+        self.decoder = Decoder(embedding_dim, hidden_size, vocabolary_size, dropout, method, device)
         #self.decoder = AttentionDecoder(embedding_dim, hidden_size, output_size, dropout, device)
         #self.decoder = AttentionDecoder_base(embedding_dim, hidden_size, output_size, dropout, device)
-        self.output_size = output_size
+        self.output_size = vocabolary_size
         self.device = device
-        self.criterion = criterion
         self.softmax = nn.Softmax(dim=1)
         self.SOS_token = 1
         self.EOS_token = 2

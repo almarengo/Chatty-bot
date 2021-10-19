@@ -81,14 +81,14 @@ if __name__ == '__main__':
     if torch.cuda.is_available():
         print('Active CUDA Device: GPU', torch.cuda.current_device())
 
-    q, a, train_pairs, vector = prepare_data('train', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
+    voc, train_pairs, vector = prepare_data('train', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
-    _, _, val_pairs, _ = prepare_data('validation', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
+    _, val_pairs, _ = prepare_data('validation', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
-    matrix_len = q.n_words
+    matrix_len = voc.n_words
     weights_matrix = np.zeros((matrix_len, N_word))
     word_found = 0
-    for i, word in enumerate(q.word2index):
+    for i, word in enumerate(voc.word2index):
         try:
             weights_matrix[i] = vector[word]
         except KeyError:
@@ -103,7 +103,7 @@ if __name__ == '__main__':
     
     lr = 0.0005
 
-    model = Seq2Seq(batch_size, q.n_words, a.n_words, N_word, hidden_size, weights_matrix, dropout, att, device, _)
+    model = Seq2Seq(batch_size, voc.n_words, N_word, hidden_size, weights_matrix, dropout, att, device)
 
     n_gpus = torch.cuda.device_count()
 
@@ -152,13 +152,13 @@ if __name__ == '__main__':
         print(f'Epoch {epoch}: {datetime.datetime.now()}')
 
         # Calculte loss
-        loss = epoch_train(model, optimizer, batch_size, train_pairs, q, a, device, n_gpus)
+        loss = epoch_train(model, optimizer, batch_size, train_pairs, voc, device, n_gpus)
         
         print(f'Loss: {loss}')
 
         # Calculate accuracy
-        train_accuracy = epoch_accuray(model, batch_size, train_pairs, q, a, device, n_gpus)
-        val_accuracy = epoch_accuray(model, batch_size, val_pairs, q, a, device, n_gpus)
+        train_accuracy = epoch_accuray(model, batch_size, train_pairs, voc, device, n_gpus)
+        val_accuracy = epoch_accuray(model, batch_size, val_pairs, voc, device, n_gpus)
 
         print(f'Train accuracy: {train_accuracy}')
         print(f'Validation accuracy: {val_accuracy}')

@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 
-def epoch_train(model, optimizer, batch_size, pairs, q, a, device, n_gpus):
+def epoch_train(model, optimizer, batch_size, pairs, voc, device, n_gpus):
     
     # Set the model in train mode
     model.train()
@@ -22,7 +22,7 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, device, n_gpus):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_length, seq_length, mask = to_batch_sequence(pairs, q, a, st, ed, perm, device)
+        encoder_in, decoder_in, enc_length, seq_length, mask = to_batch_sequence(pairs, voc, st, ed, perm, device)
 
         if torch.cuda.is_available() and n_gpus > 1:
             encoder_in = encoder_in.to(0)
@@ -53,7 +53,7 @@ def epoch_train(model, optimizer, batch_size, pairs, q, a, device, n_gpus):
 
 
 
-def to_batch_sequence(pairs, q, a, st, ed, perm, device):
+def to_batch_sequence(pairs, voc, st, ed, perm, device):
 
     PAD_token = 0
     UNK_token = 3
@@ -66,8 +66,8 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
         encoder_in.append(pair_batch[0])
         decoder_in.append(pair_batch[1])
     
-    encoder_in = [[q.word2index.get(idx, UNK_token) for idx in encoder_in[row].split()] for row in range(len(encoder_in))]
-    decoder_in = [[a.word2index.get(idx, UNK_token) for idx in decoder_in[row].split()] for row in range(len(decoder_in))]
+    encoder_in = [[voc.word2index.get(idx, UNK_token) for idx in encoder_in[row].split()] for row in range(len(encoder_in))]
+    decoder_in = [[voc.word2index.get(idx, UNK_token) for idx in decoder_in[row].split()] for row in range(len(decoder_in))]
 
     encoder_lengths = [len(row) for row in encoder_in]
     decoder_lengths = [len(row) for row in decoder_in]
@@ -100,7 +100,9 @@ def to_batch_sequence(pairs, q, a, st, ed, perm, device):
 
 
 
-def epoch_accuray(model, batch_size, pairs, q, a, device, n_gpus):
+def epoch_accuray(model, batch_size, pairs, voc, device, n_gpus):
+
+    UNK_token = 3
     
     # Set the model in evaluation mode
     model.eval()
@@ -119,7 +121,7 @@ def epoch_accuray(model, batch_size, pairs, q, a, device, n_gpus):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(pairs, q, a, st, ed, indexes, device)
+        encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(pairs, voc, st, ed, indexes, device)
 
         if torch.cuda.is_available() and n_gpus > 1:
             encoder_in = encoder_in.to(0)
@@ -137,13 +139,10 @@ def epoch_accuray(model, batch_size, pairs, q, a, device, n_gpus):
         for idx in range(st, ed):
             row_list = []
             for word in pairs[idx][1].split():
-                try:
-                    row_list.append(a.word2index[word])
-                except:
-                    row_list.append(a.word2index['UNK'])
+                row_list.append(voc.word2index.get(word, UNK_token))
+
             true_batch.append(row_list)
-        #print(true_batch)
-        #print(predictions)
+        
         # Calculate the error for each batch
         batch_acc = model.check_acc(predictions, true_batch)
 

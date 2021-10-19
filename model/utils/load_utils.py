@@ -4,7 +4,7 @@ import unicodedata
 import numpy as np
 
 
-class Input_lang:
+class Voc:
     
     def __init__(self, name, word2index):
         self.name = name
@@ -31,33 +31,9 @@ class Input_lang:
             self.add_word(word)
 
 
-class Output_lang:
-    
-    def __init__(self, name):
-        self.name = name
-        self.word_count = {}
-        self.word2index = {'PAD': 0, 'SOS': 1, 'EOS': 2, 'UNK': 3}
-        self.n_words = 4
-        self.index2word = {0: 'PAD', 1: 'SOS', 2: 'EOS', 3: 'UNK'}
-        
-    
-    def add_word(self, word):
-        if word not in self.word2index:
-            self.word2index[word] = self.n_words
-            self.index2word[self.n_words] = word
-            self.word_count[word] = 1
-            self.n_words += 1
-        else:
-            self.word_count[word] += 1
-    
-    def add_sentence(self, sentence):
-        for word in sentence.split():
-            self.add_word(word)
-
-
 
 def load_glove(file_path, small=True):
-    idx = 1
+    idx = 4
     vectors = {}
     word2idx = {}
     with open(file_path, encoding='utf8') as lines:
@@ -73,8 +49,14 @@ def load_glove(file_path, small=True):
             vectors[line[0].lower()] = np.array(list(line[1:]), dtype='float')
             idx += 1
             embed_dim = len(list(line[1:]))
-    vectors[0] = np.zeros(embed_dim, dtype='float')
+    vectors[0] = np.random.normal(scale=0.6, size=(embed_dim, ))
+    vectors[1] = np.random.normal(scale=0.6, size=(embed_dim, ))
+    vectors[2] = np.random.normal(scale=0.6, size=(embed_dim, ))
+    vectors[3] = np.random.normal(scale=0.6, size=(embed_dim, ))
     word2idx['PAD'] = 0
+    word2idx['SOS'] = 1
+    word2idx['EOS'] = 2
+    word2idx['UNK'] = 3
     return vectors, word2idx
 
 
@@ -127,22 +109,22 @@ def Read_data(dataset,  glove_file_path, small):
     # Load GloVe vectors
     glove_vectors, glove_word2idx = load_glove(glove_file_path, small)
     # Initialize the classes questions and answers to assign indexes and count the words
-    questions = Input_lang('questions', glove_word2idx)
-    answers = Output_lang('answers')
-    
-    return questions, answers, pairs, glove_vectors
+    vocabulary = Voc('vocabulary', glove_word2idx)
+
+    return vocabulary, pairs, glove_vectors
 
 
 def prepare_data(dataset, glove_file_path, small=True):
-    q, a, pairs, word_vector = Read_data(dataset, glove_file_path, small)
+    voc, pairs, word_vector = Read_data(dataset, glove_file_path, small)
+    # Adding EOS in answers
+    pairs = [[line[0], line[1]+' EOS'] for line in pairs]
     print(f'Read {len(pairs)} sentence pairs')
     print('Counting words')
     for pair in pairs:
-        q.add_sentence(pair[0])
-        a.add_sentence(pair[1])
+        voc.add_sentence(pair[0])
+        voc.add_sentence(pair[1])
     
     print('Counted words:')
-    print(f'In {q.name}: {q.n_words} words')
-    print(f'In {a.name}: {a.n_words} words')
+    print(f'In {voc.name}: {voc.n_words} words')
     
-    return q, a, pairs, word_vector
+    return voc, pairs, word_vector
