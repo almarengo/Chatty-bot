@@ -3,13 +3,13 @@ from model.utils.train_utils import *
 
 class CalculateBleu():
 
-    def __init__(self, model, batch_size, pairs, q, a, device):
+    def __init__(self, model, batch_size, pairs, voc, device):
         self.model = model
         self.batch_size = batch_size
         self.pairs = pairs
-        self.q = q
-        self.a = a
+        self.voc = voc
         self.device = device
+        self.UNK_token = 3
         
     def score(self):
 
@@ -31,7 +31,7 @@ class CalculateBleu():
             
             ed = st + self.batch_size if (st + self.batch_size) < n_records else n_records
         
-            encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(self.pairs, self.q, self.a, st, ed, indexes, self.device)
+            encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(self.pairs, self.voc, st, ed, indexes, self.device)
 
             dec_len = decoder_in.size()[1]
 
@@ -44,10 +44,8 @@ class CalculateBleu():
             for idx in range(st, ed):
                 row_list = []
                 for word in self.pairs[idx][1].split():
-                    try:
-                        row_list.append(self.a.word2index[word])
-                    except:
-                        row_list.append(self.a.word2index['UNK'])
+                    row_list.append(self.a.word2index.get(word, self.UNK_token))
+            
                 true_batch.append(row_list)
             
             predictions_epoch.extend(predictions)
