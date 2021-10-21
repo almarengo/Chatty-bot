@@ -103,7 +103,7 @@ if __name__ == '__main__':
         optimizer = 'Adam'
         print('Using Adam Optimizer')
     
-    lr = 0.0001
+    lr = 0.0005
 
     model = Seq2Seq(batch_size, voc.n_words, N_word, hidden_size, weights_matrix, dropout, att, device)
 
