@@ -44,7 +44,7 @@ class CalculateBleu():
             for idx in range(st, ed):
                 row_list = []
                 for word in self.pairs[idx][1].split():
-                    row_list.append(self.a.word2index.get(word, self.UNK_token))
+                    row_list.append(self.voc.word2index.get(word, self.UNK_token))
             
                 true_batch.append(row_list)
             
