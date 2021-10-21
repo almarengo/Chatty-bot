@@ -53,8 +53,8 @@ class CalculateBleu():
             
             st = ed
 
-        references = [[[self.a.index2word[idx] for idx in line]] for line in true_epoch]
-        hypotheses = [[self.a.index2word[idx] for idx in line] for line in predictions_epoch]
+        references = [[[self.voc.index2word[idx] for idx in line]] for line in true_epoch]
+        hypotheses = [[self.voc.index2word[idx] for idx in line] for line in predictions_epoch]
 
         bleu = bleu_score.corpus_bleu(references, hypotheses, smoothing_function=bleu_score.SmoothingFunction().method1)
 
