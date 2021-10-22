@@ -90,7 +90,8 @@ def Read_data(dataset,  glove_file_path, small):
     # Load one of the three datasets train, test or validation and return a list of all the lines
     lines = load_file(dataset)
     # Split each line into sentence and create a list of list
-    list_sentences = [[sentence for sentence in line.split('__eou__')] for line in lines]
+    list_sentences = [[sentence for sentence in line.split('\n')] for line in lines]
+    list_sentences = [[sentence for sentence in str(line).strip(']["').split('__eou__')] for line in list_sentences]
     # Assumes odd sentences being the source aka question and even sentences the target aka answer, still in a list of list format
     source_sentences_list = [[source for source in sentence if sentence.index(source)%2 == 0] for sentence in list_sentences]
     target_sentences_list = [[source for source in sentence if sentence.index(source)%2 != 0] for sentence in list_sentences]
