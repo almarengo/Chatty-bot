@@ -99,7 +99,7 @@ def Read_data(dataset,  glove_file_path, small):
     # If number of sentences is odd add an EMPTY line at the end
     for sentence in list_sentences:
         if len(sentence)%2 != 0:
-            sentence.append('EMPTY')
+            sentence.append('EOS')
 
     source_sentences_list = []
     for idx in range(len(list_sentences)):
