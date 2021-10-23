@@ -91,30 +91,44 @@ def Read_data(dataset,  glove_file_path, small):
     lines = load_file(dataset)
     # Split each line into sentence and create a list of list
     list_sentences = [[sentence for sentence in line.split('\n')] for line in lines]
-    list_sentences = [[sentence for sentence in str(line).strip(']["').split('__eou__')] for line in list_sentences]
+    list_sentences = [[sentence for sentence in str(line).strip(']["').split(' __eou__ ')] for line in list_sentences]
     # Assumes odd sentences being the source aka question and even sentences the target aka answer, still in a list of list format
-    source_sentences_list = [[source for source in sentence if sentence.index(source)%2 == 0] for sentence in list_sentences]
-    target_sentences_list = [[source for source in sentence if sentence.index(source)%2 != 0] for sentence in list_sentences]
+    #source_sentences_list = [[source for source in sentence if sentence.index(source)%2 == 0] for sentence in list_sentences]
+    #target_sentences_list = [[source for source in sentence if sentence.index(source)%2 != 0] for sentence in list_sentences]
 
-    for sentence_list in source_sentences_list:
-        try:
-            sentence_list.remove('')
-            sentence_list.remove(' ')
-        except:
-            continue
+    # If number of sentences is odd add an EMPTY line at the end
+    for sentence in list_sentences:
+        if len(sentence)%2 != 0:
+            sentence.append('EMPTY')
 
+    source_sentences_list = []
+    for idx in range(len(list_sentences)):
+        source_list = []
+        for u_idx in range(len(list_sentences[idx])):
+            if u_idx%2 == 0:
+                source_list.append(list_sentences[idx][u_idx])
+        source_sentences_list.append(source_list)
+
+    target_sentences_list = []
+    for idx in range(len(list_sentences)):
+        target_list = []
+        for u_idx in range(len(list_sentences[idx])):
+            if u_idx%2 != 0:
+                target_list.append(list_sentences[idx][u_idx])
+        target_sentences_list.append(target_list)
     # Flattens the list to have all the questions in one list
     source_sentences = [sentence for row in source_sentences_list for sentence in row]
     # Flattens the list to have all the answers in one list
     target_sentences = [sentence for row in target_sentences_list for sentence in row]
     # Creates a pair of question-answer as a list of list
     pairs = [[sentence_cleaning(question), sentence_cleaning(answer)] for question, answer in zip(source_sentences, target_sentences)]
+    
     # Pad empty sentences
     #pairs = [['EMPTY', line[1]] if line[0] == '' else line for line in pairs]
-    pairs = [[line[0], 'EMPTY'] if line[1] == '' else line for line in pairs]
+    #pairs = [[line[0], 'EMPTY'] if line[1] == '' else line for line in pairs]
     # Pad spaces
     #pairs = [['EMPTY', line[1]] if line[0] == ' ' else line for line in pairs]
-    pairs = [[line[0], 'EMPTY'] if line[1] == ' ' else line for line in pairs]
+    #pairs = [[line[0], 'EMPTY'] if line[1] == ' ' else line for line in pairs]
     # Load GloVe vectors
     glove_vectors, glove_word2idx = load_glove(glove_file_path, small)
     # Initialize the classes questions and answers to assign indexes and count the words
