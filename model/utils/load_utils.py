@@ -101,6 +101,12 @@ def Read_data(dataset,  glove_file_path, small):
         if len(sentence)%2 != 0:
             sentence.append('EOS')
 
+    # Remove __eou__ at the end of sentences
+    for idx in range(len(list_sentences)):
+        for u_idx in range(len(list_sentences[idx])):
+            if '__eou__' in list_sentences[idx][u_idx]:
+                list_sentences[idx][u_idx] = list_sentences[idx][u_idx].replace(' __eou__', '')
+
     source_sentences_list = []
     for idx in range(len(list_sentences)):
         source_list = []
