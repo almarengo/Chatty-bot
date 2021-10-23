@@ -75,7 +75,7 @@ def sentence_cleaning(sentence):
     # Get rid of double puntuation
     sentence = re.sub(r"([.!?]+)\1", r"\1", sentence.lower().strip())
     # Get rid of non-letter character
-    sentence = re.sub(r"[^a-zA-Z.!?']+", r" ", sentence)
+    sentence = re.sub(r"[^a-zA-Z0-9.!?']+", r" ", sentence)
     return sentence
 
 
@@ -122,7 +122,7 @@ def Read_data(dataset,  glove_file_path, small):
     target_sentences = [sentence for row in target_sentences_list for sentence in row]
     # Creates a pair of question-answer as a list of list
     pairs = [[sentence_cleaning(question), sentence_cleaning(answer)] for question, answer in zip(source_sentences, target_sentences)]
-    
+
     # Pad empty sentences
     #pairs = [['EMPTY', line[1]] if line[0] == '' else line for line in pairs]
     #pairs = [[line[0], 'EMPTY'] if line[1] == '' else line for line in pairs]
