@@ -17,4 +17,4 @@ RUN python3 -m pip install --no-cache-dir -r requirements.txt
 
 COPY . /src
 
-CMD [ "python3", "-u", "train.py" ]
+#CMD [ "python3", "-u", "train.py" ]

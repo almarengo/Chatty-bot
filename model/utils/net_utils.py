@@ -5,6 +5,7 @@ import numpy as np
 def run_lstm(lstm, inp, inp_len, device, hidden=None):
     # Run the LSTM using packed sequence.
     # This requires to first sort the input according to its length.
+    total_length = inp.size(1)
     sort_perm = np.array(sorted(range(len(inp_len)), key=lambda k:inp_len[k], reverse=True))
     sort_inp_len = inp_len[sort_perm]
     sort_perm_inv = np.argsort(sort_perm)
@@ -21,7 +22,7 @@ def run_lstm(lstm, inp, inp_len, device, hidden=None):
         lstm_hidden = hidden[:, sort_perm]
 
     sort_ret_s, sort_ret_h = lstm(lstm_inp, lstm_hidden)
-    ret_s = nn.utils.rnn.pad_packed_sequence(sort_ret_s, batch_first=True)[0][sort_perm_inv]
+    ret_s = nn.utils.rnn.pad_packed_sequence(sort_ret_s, batch_first=True, total_length=total_length)[0][sort_perm_inv]
     
     ret_h = sort_ret_h[:, sort_perm_inv]
     return ret_s, ret_h
