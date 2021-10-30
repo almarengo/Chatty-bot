@@ -5,9 +5,6 @@ import numpy as np
 import torch
 torch.cuda.empty_cache()
 from model.utils.Calculate_BLEU import *
-import matplotlib
-matplotlib.use('TkAgg')
-import matplotlib.pyplot as plt
 import datetime
 import argparse
 
@@ -132,30 +129,6 @@ if __name__ == '__main__':
     else:
         optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
     
-    xdata = []
-    ydata1 = []
-    ydata2 = []
-    ydata3 = []
-    
-    plt.show()
-    plt.style.use('ggplot') 
-
-    fig, (ax1, ax2) = plt.subplots(2, 1)
-    #fig.set_size_inches(15, 8.5, forward=True)
-
-    line1, = ax1.plot(xdata, ydata1, color='red')
-    line2, = ax2.plot(xdata, ydata2, color='blue', label='Train Accuracy')
-    line3, = ax2.plot(xdata, ydata3, color='orange', label='Val Accuracy')
-    ax2.set_xlabel('Epoch')
-    ax1.set_ylabel('Loss')
-    ax2.set_ylabel('Accuracy')
-    ax1.set_title('Train Loss')
-    ax2.set_title('Accuracy')
-    fig.legend(loc=4)
-    fig.tight_layout()
-
-    max_plot1 = 0
-    max_plot2 = 0
     
     #for epoch in tqdm(range(1, n_epochs+1), desc="Total epochs: "):
     for epoch in range(1, n_epochs+1):
@@ -182,34 +155,10 @@ if __name__ == '__main__':
 
             # Save model
             torch.save(model.state_dict(), f'saved_model/seq2seq_{epoch}_{att}')
-
-        # Plot model
-        if loss > max_plot1:
-            max_plot1 = np.ceil(loss)
-        if train_accuracy > max_plot2:
-            max_plot2 = np.round(train_accuracy+0.05, decimals=1)
-        if val_accuracy > max_plot2:
-            max_plot2 = np.round(val_accuracy+0.05, decimals=1)
     
-        xdata.append(epoch)
-        ydata1.append(loss)
-        ydata2.append(train_accuracy)
-        ydata3.append(val_accuracy)
-        line1.set_xdata(xdata)
-        line1.set_ydata(ydata1)
-        line2.set_xdata(xdata)
-        line2.set_ydata(ydata2)
-        line3.set_xdata(xdata)
-        line3.set_ydata(ydata3)
-        ax1.set_xlim(0, epoch)
-        ax1.set_ylim(0, max_plot1)
-        ax2.set_xlim(0, epoch)
-        ax2.set_ylim(0, max_plot2)
-        plt.draw()
-        plt.pause(5)
+        
 
     print(f"Optimization ended successfully")
-    plt.show()   
     
     
 
