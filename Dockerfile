@@ -6,7 +6,7 @@ RUN apt-get update -y && \
     python3.8 python3-pip python3-setuptools python3-dev &&\
     apt-get install -y python3.8-tk &&\
     apt-get remove python3-matplotlib &&\
-    apt-get install -y libx11-dev &&\
+    apt-get install -y x11-apps &&\
     apt-get install -y python3-matplotlib
  
 
