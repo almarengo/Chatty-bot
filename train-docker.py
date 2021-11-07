@@ -121,7 +121,7 @@ if __name__ == '__main__':
         model = model.to(0)
         print(f'Using Data Parallel on {n_gpus} GPUs')
     else:
-        print('NOT usung Data Parallel')
+        print('NOT using Data Parallel')
 
 
     if optimizer == 'Adam':
