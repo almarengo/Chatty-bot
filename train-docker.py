@@ -67,8 +67,11 @@ if __name__ == '__main__':
     else:
         att = 'general'
         print('Using general attention')
-    
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    if torch.cuda.is_available() and torch.cuda.device_count() > 1:
+        device = "cuda:0"
+    else:
+        device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 
     print(f'On this machine you have {device}') 
 
