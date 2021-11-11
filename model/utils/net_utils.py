@@ -11,9 +11,11 @@ def run_lstm(lstm, inp, inp_len, device, hidden=None):
     sort_perm_inv = np.argsort(sort_perm)
     
     #sort_perm = torch.tensor(sort_perm, dtype=torch.long, device=device)
-    sort_perm = torch.tensor(sort_perm).type_as(inp).type(dtype=torch.long)
+    #sort_perm = torch.tensor(sort_perm).type_as(inp).type(dtype=torch.long)
+    sort_perm = inp.new_tensor(sort_perm)
     #sort_perm_inv = torch.tensor(sort_perm_inv, dtype=torch.long, device=device)
-    sort_perm_inv = torch.tensor(sort_perm_inv).type_as(inp).type(dtype=torch.long)
+    #sort_perm_inv = torch.tensor(sort_perm_inv).type_as(inp).type(dtype=torch.long)
+    sort_perm_inv = inp.new_tensor(sort_perm_inv)
 
     lstm_inp = nn.utils.rnn.pack_padded_sequence(inp[sort_perm], sort_inp_len, batch_first=True)
 
