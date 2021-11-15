@@ -29,9 +29,38 @@ class Encoder(nn.Module):
             output, hidden = self.gru(embedded)
         else:
             # Runs it through the GRU and get: output (B x T x H) and last hidden state (1 x B x H)
-            output, hidden = run_lstm(self.gru, embedded, enc_len, self.device, hidden=hidden)
+            output, hidden = self.run_lstm(self.gru, embedded, enc_len, hidden=hidden)
         
         return output, hidden
+    
+    def run_lstm(self, lstm, inp, inp_len, hidden=None):
+        # Run the LSTM using packed sequence.
+        # This requires to first sort the input according to its length.
+        total_length = inp.size(1)
+        sort_perm = np.array(sorted(range(len(inp_len)), key=lambda k:inp_len[k], reverse=True))
+        sort_inp_len = inp_len[sort_perm]
+        sort_perm_inv = np.argsort(sort_perm)
+        
+        sort_perm = torch.tensor(sort_perm, dtype=torch.long, device=inp.device)
+        #sort_perm = torch.tensor(sort_perm).type_as(inp).type(dtype=torch.long)
+        #sort_perm = inp.new_tensor(sort_perm).type(dtype=torch.long)
+        sort_perm_inv = torch.tensor(sort_perm_inv, dtype=torch.long, device=inp.device)
+        #sort_perm_inv = torch.tensor(sort_perm_inv).type_as(inp).type(dtype=torch.long)
+        #sort_perm_inv = inp.new_tensor(sort_perm_inv).type(dtype=torch.long)
+
+        lstm_inp = nn.utils.rnn.pack_padded_sequence(inp[sort_perm], sort_inp_len, batch_first=True)
+
+        if hidden is None:
+            lstm_hidden = None
+        else:
+            #lstm_hidden = (hidden[0][:, sort_perm], hidden[1][:, sort_perm])
+            lstm_hidden = hidden[:, sort_perm]
+
+        sort_ret_s, sort_ret_h = lstm(lstm_inp, lstm_hidden)
+        ret_s = nn.utils.rnn.pad_packed_sequence(sort_ret_s, batch_first=True, total_length=total_length)[0][sort_perm_inv]
+        
+        ret_h = sort_ret_h[:, sort_perm_inv]
+        return ret_s, ret_h
     
     def initHidden(self):
 
@@ -72,7 +101,7 @@ class Attention(nn.Module):
         # Pass results through a linear layer to (B x T x H) and tanh activation function
         energy = self.attn(torch.cat((hidden.expand(-1, encoder_outputs.size(1), -1), encoder_outputs), 2)).tanh()
         # Multiply scalar v and energy (H)*(B x T x H) = (B x T x H) and sums along last dimension to (B x T)
-        return torch.sum(self.v.to(self.device)*energy, dim=2)
+        return torch.sum(self.v.to(hidden.device)*energy, dim=2)
 
         
     def forward(self, hidden, encoder_outputs):
