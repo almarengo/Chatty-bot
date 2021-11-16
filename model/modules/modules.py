@@ -19,6 +19,8 @@ class Encoder(nn.Module):
         self.embedding.to(device)
         #self.embedding.from_pretrained(torch.from_numpy(weights_matrix).to(device))
         self.gru = nn.GRU(embedding_dim, hidden_size, dropout=dropout, batch_first=True).to(device)
+        self.x = torch.empty(10, dtype=torch.long, device=device)
+        self.y = torch.empty(10, dtype=torch.long, device=device)
         self.device = device
     
     def forward(self, input, enc_len, hidden=None):
@@ -41,12 +43,12 @@ class Encoder(nn.Module):
         sort_inp_len = inp_len[sort_perm]
         sort_perm_inv = np.argsort(sort_perm)
         
-        sort_perm = torch.tensor(sort_perm, dtype=torch.long, device=inp.device)
+        #sort_perm = torch.tensor(sort_perm, dtype=torch.long, device=inp.device)
         #sort_perm = torch.tensor(sort_perm).type_as(inp).type(dtype=torch.long)
-        #sort_perm = inp.new_tensor(sort_perm).type(dtype=torch.long)
-        sort_perm_inv = torch.tensor(sort_perm_inv, dtype=torch.long, device=inp.device)
+        sort_perm = self.x.new_tensor(sort_perm)
+        #sort_perm_inv = torch.tensor(sort_perm_inv, dtype=torch.long, device=inp.device)
         #sort_perm_inv = torch.tensor(sort_perm_inv).type_as(inp).type(dtype=torch.long)
-        #sort_perm_inv = inp.new_tensor(sort_perm_inv).type(dtype=torch.long)
+        sort_perm_inv = self.y.new_tensor(sort_perm_inv)
 
         lstm_inp = nn.utils.rnn.pack_padded_sequence(inp[sort_perm], sort_inp_len, batch_first=True)
 
