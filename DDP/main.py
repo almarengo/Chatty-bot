@@ -44,9 +44,14 @@ def main():
     if torch.cuda.is_available():
         print('Active CUDA Device: GPU', torch.cuda.current_device())
 
+    n_gpus = torch.cuda.device_count()
+
+    if n_gpus > args.gpus:
+            print(f'This device has more GPUs than you passed in the arguments. You passed {args.gpus} but you have {n_gpus}')
+
     args.world_size = args.gpus * args.nodes                
-    os.environ['MASTER_ADDR'] = '10.57.23.164'              
-    os.environ['MASTER_PORT'] = '8888'
+    os.environ['MASTER_ADDR'] = 'localhost'              
+    os.environ['MASTER_PORT'] = '12355'
 
     if torch.cuda.is_available():                      
         mp.spawn(train, nprocs=args.gpus, args=(args,))
