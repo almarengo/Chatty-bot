@@ -7,23 +7,18 @@ from model.utils.net_utils import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, method, device):
+    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, method, gpu):
         
         super(Seq2Seq, self).__init__()
         
-        self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, device)
-        self.decoder = Decoder(embedding_dim, hidden_size, vocabolary_size, dropout, method, device)
-        #self.decoder = AttentionDecoder(embedding_dim, hidden_size, output_size, dropout, device)
-        #self.decoder = AttentionDecoder_base(embedding_dim, hidden_size, output_size, dropout, device)
+        self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout)
+        self.decoder = Decoder(embedding_dim, hidden_size, vocabolary_size, dropout, method)
         self.output_size = vocabolary_size
-        self.device = device
         self.softmax = nn.Softmax(dim=1)
         self.SOS_token = 1
         self.EOS_token = 2
         self.PAD_token = 0
-        #self.decoder_input = torch.tensor([batch_size*[self.SOS_token]], device=device)
-        #self.decoder_outputs = torch.zeros((1, 1, 1), device=device)
-        #self.prediction = torch.zeros((1, 1, 1), dtype=torch.long, device=device)
+        self.gpu = gpu
 
     
     def forward(self, src, trg, enc_length, seq_length, teacher_forcing_ratio = 0.8):
@@ -34,51 +29,41 @@ class Seq2Seq(nn.Module):
 
         #encoder_hidden = self.encoder.initHidden()
         
-        decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
-        #decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size)).to(src.device)
+        #decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
+        decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size)).to(src.device)
         #decoder_outputs = self.decoder_outputs.new_tensor(np.zeros((batch_size, dec_len, self.output_size)))
         
         encoder_outputs, encoder_hidden = self.encoder(src, enc_length)
         
-        decoder_input = torch.tensor([batch_size*[self.SOS_token]], device = self.device)
-        #decoder_input = torch.tensor([batch_size*[self.SOS_token]]).to(src.device)
+        #decoder_input = torch.tensor([batch_size*[self.SOS_token]], device = self.device)
+        decoder_input = torch.tensor([batch_size*[self.SOS_token]]).to(src.device)
         #decoder_input = self.decoder_input
         decoder_hidden = encoder_hidden
         
         use_teacher_forcing = True if random.random() < teacher_forcing_ratio else False
-
-        decoder_outputs_list = []
         
         if use_teacher_forcing:
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
-                # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                #decoder_output = assign_EOS(decoder_output, seq_length, inp)
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
                 decoder_outputs[:, inp, :] = decoder_output
-                decoder_outputs_list.append(decoder_output)
-                
                 decoder_input = trg[:, inp].unsqueeze(0)
         else:
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
-                # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                #decoder_output = assign_EOS(decoder_output, seq_length, inp)
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
                 decoder_outputs[:, inp, :] = decoder_output
-                decoder_outputs_list.append(decoder_output)
                 _, topi = decoder_output.topk(1)
-
                 decoder_input = topi.transpose(0, 1).detach()
                 
 
-        return decoder_outputs, decoder_outputs_list
+        return decoder_outputs
 
 
 
-    def loss(self, decoder_outputs_list, trg, mask):
+    def loss(self, decoder_outputs, trg, mask):
 
         print_losses = []
         n_totals = 0
@@ -86,9 +71,9 @@ class Seq2Seq(nn.Module):
         loss = 0
         for idx in range(dec_len):
             nTotal = mask[:, idx].sum().item()
-            #loss += self.criterion(decoder_outputs_list[idx], trg[:, idx].squeeze())
-            crossEntropy = -torch.log(torch.gather(decoder_outputs_list[idx], 1, trg[:, idx].view(-1, 1)).squeeze(1))
-            #crossEntropy = self.criterion(decoder_outputs_list[idx], trg[:, idx].squeeze())
+            
+            crossEntropy = -torch.log(torch.gather(decoder_outputs[:, idx, :], 1, trg[:, idx].view(-1, 1)).squeeze(1)).cuda(self.gpu)
+            
             lossi = crossEntropy.masked_select(mask[:, idx].view(-1, 1)).mean()
             loss += lossi
             n_totals += nTotal
@@ -121,24 +106,21 @@ class Seq2Seq(nn.Module):
         enc_len = enc_length
         
         if not is_pred:
-            decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
-            #decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size)).to(src.device)
+            #decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
+            decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size)).to(src.device)
             #decoder_outputs = self.decoder_outputs.new_tensor(np.zeros((batch_size, dec_len, self.output_size)))
         
         encoder_outputs, encoder_hidden = self.encoder(src, enc_len)
         
-        decoder_input = torch.tensor([batch_size*[self.SOS_token]], device = self.device)
-        #decoder_input = torch.tensor([batch_size*[self.SOS_token]]).to(src.device)
+        #decoder_input = torch.tensor([batch_size*[self.SOS_token]], device = self.device)
+        decoder_input = torch.tensor([batch_size*[self.SOS_token]]).to(src.device)
         #decoder_input = self.decoder_input
         decoder_hidden = encoder_hidden
-
 
         if is_pred:
             prediction = []
             for inp in range(max_length):
                 decoder_output, decoder_hidden, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
-                # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                #decoder_output = assign_EOS(decoder_output, seq_length, inp)
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
                 _, topi = decoder_output.topk(1)
@@ -154,17 +136,13 @@ class Seq2Seq(nn.Module):
             
 
         else:
-            prediction = torch.zeros((batch_size, dec_len), dtype=torch.long, device=self.device)
-            #prediction = torch.zeros((batch_size, dec_len), dtype=torch.long).to(src.device)
+            #prediction = torch.zeros((batch_size, dec_len), dtype=torch.long, device=self.device)
+            prediction = torch.zeros((batch_size, dec_len), dtype=torch.long).to(src.device)
             #prediction = self.prediction.new_tensor(np.zeros((batch_size, dec_len)))
             for inp in range(dec_len):
                 decoder_output, decoder_hidden, _ = self.decoder(decoder_input, decoder_hidden, encoder_outputs)
-                # Assigns max prob to position 1 (EOS) to words at end of sequence 
-                #decoder_output = assign_EOS(decoder_output, seq_length, inp)
-                
                 # Runs output through softmax
                 decoder_output = self.softmax(decoder_output)
-
                 decoder_outputs[:, inp, :] = decoder_output
                 
                 _, topi = decoder_output.topk(1)

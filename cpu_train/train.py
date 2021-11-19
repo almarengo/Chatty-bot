@@ -10,29 +10,35 @@ matplotlib.use('TkAgg')
 import matplotlib.pyplot as plt
 import datetime
 import argparse
-import torch.nn as nn
-import torch.distributed as dist
-from apex.parallel import DistributedDataParallel as DDP
 
 
-
-def train(gpu, args):
-
-    rank = args.nr * args.gpus + gpu	                          
-    dist.init_process_group(                                   
-    	backend='nccl',                                         
-   		init_method='env://',                                   
-    	world_size=args.world_size,                              
-    	rank=rank  
-
-    torch.manual_seed(0)
+if __name__ == '__main__':
+    parser = argparse.ArgumentParser()
+    parser.add_argument('n_epochs', type=int, default=100,
+            help='If set, number of epochs to train the model. Default=100')
+    parser.add_argument('batch_size', type=int, default=32,
+            help='If set, batch size to train the model. Default=32')
+    parser.add_argument('--pre_trained', action='store_true', 
+            help='If set, load pre-trained model.')
+    parser.add_argument('--toy', action='store_true', 
+            help='If set, use small data; used for fast debugging.')
+    parser.add_argument('--dot', action='store_true', 
+            help='If set, apply dot attention.')
+    parser.add_argument('--general', action='store_true', 
+            help='If set, apply general attention.')
+    parser.add_argument('--concat', action='store_true', 
+            help='If set, apply concatenation attention.')
+    parser.add_argument('--sgd', action='store_true', 
+            help='If set, apply SGD optimizer.')
+    
+    args = parser.parse_args()
 
     N_word=300
     hidden_size = 100
     dropout = 0.2
 
     if args.n_epochs:
-        n_epochs=args.epochs
+        n_epochs=args.n_epochs
         print(f'Epochs training: {args.n_epochs}')
     else:
         n_epochs=100
@@ -65,7 +71,19 @@ def train(gpu, args):
         att = 'general'
         print('Using general attention')
     
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    print(f'On this machine you have {device}') 
+
     
+    print('__pyTorch VERSION:', torch.__version__)
+    print('__CUDA VERSION')
+    print('__CUDNN VERSION:', torch.backends.cudnn.version())
+    print('__Number CUDA Devices:', torch.cuda.device_count())
+    print('__Devices')
+    
+    if torch.cuda.is_available():
+        print('Active CUDA Device: GPU', torch.cuda.current_device())
 
     voc, train_pairs, vector = prepare_data('train', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
@@ -89,8 +107,6 @@ def train(gpu, args):
     
     lr = 0.0005
 
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
     model = Seq2Seq(batch_size, voc.n_words, N_word, hidden_size, weights_matrix, dropout, att, device)
 
     if args.pre_trained:
@@ -100,12 +116,16 @@ def train(gpu, args):
         print('Initializing model')
         
 
-    torch.cuda.set_device(gpu)
-    model.cuda(gpu)
-
     n_gpus = torch.cuda.device_count()
 
-    model = nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
+    if torch.cuda.is_available() and n_gpus > 1:
+        device_ids = list(range(n_gpus))
+        model = torch.nn.DataParallel(model, device_ids=device_ids)
+        model = model.to(0)
+        print(f'Using Data Parallel on {n_gpus} GPUs')
+    else:
+        print('NOT usung Data Parallel')
+
 
     if optimizer == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
@@ -190,3 +210,7 @@ def train(gpu, args):
 
     print(f"Optimization ended successfully")
     plt.show()   
+    
+    
+
+

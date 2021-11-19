@@ -3,12 +3,12 @@ from model.utils.train_utils import *
 
 class CalculateBleu():
 
-    def __init__(self, model, batch_size, pairs, voc, device):
+    def __init__(self, model, batch_size, pairs, voc, gpu):
         self.model = model
         self.batch_size = batch_size
         self.pairs = pairs
         self.voc = voc
-        self.device = device
+        self.gpu = gpu
         self.UNK_token = 3
         
     def score(self):
@@ -31,7 +31,7 @@ class CalculateBleu():
             
             ed = st + self.batch_size if (st + self.batch_size) < n_records else n_records
         
-            encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(self.pairs, self.voc, st, ed, indexes, self.device)
+            encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(self.pairs, self.voc, st, ed, indexes, self.gpu)
 
             dec_len = decoder_in.size()[1]
 

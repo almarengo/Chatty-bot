@@ -3,7 +3,7 @@ import torch
 from torch import nn
 
 
-def epoch_train(model, optimizer, batch_size, pairs, voc, device, n_gpus):
+def epoch_train(model, optimizer, batch_size, pairs, voc, gpu):
     
     # Set the model in train mode
     model.train()
@@ -22,17 +22,12 @@ def epoch_train(model, optimizer, batch_size, pairs, voc, device, n_gpus):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_length, seq_length, mask = to_batch_sequence(pairs, voc, st, ed, perm, device)
-
-        if torch.cuda.is_available() and n_gpus > 1:
-            encoder_in = encoder_in.to(0)
-            decoder_in = decoder_in.to(0)
-            mask = mask.to(0)
+        encoder_in, decoder_in, enc_length, seq_length, mask = to_batch_sequence(pairs, voc, st, ed, perm, gpu)
        
         # Calculate outputs and loss
-        output_values, output_values_loss_inp = model(encoder_in, decoder_in, enc_length, seq_length)
+        output_values = model(encoder_in, decoder_in, enc_length, seq_length)
         
-        loss, print_loss = model.loss(output_values_loss_inp, decoder_in, mask)
+        loss, print_loss = model.loss(output_values, decoder_in, mask)
 
         # Clear gradients (pytorch accumulates gradients by default)
         optimizer.zero_grad() 
@@ -53,7 +48,7 @@ def epoch_train(model, optimizer, batch_size, pairs, voc, device, n_gpus):
 
 
 
-def to_batch_sequence(pairs, voc, st, ed, perm, device):
+def to_batch_sequence(pairs, voc, st, ed, perm, gpu):
 
     PAD_token = 0
     UNK_token = 3
@@ -75,8 +70,8 @@ def to_batch_sequence(pairs, voc, st, ed, perm, device):
     max_encoder_length = max(encoder_lengths)
     max_decoder_length = max(decoder_lengths)
     
-    encoder_in_tensor = torch.zeros(ed-st, max_encoder_length, dtype=torch.long, device=device)
-    decoder_in_tensor = torch.zeros(ed-st, max_decoder_length, dtype=torch.long, device=device)
+    encoder_in_tensor = torch.zeros(ed-st, max_encoder_length, dtype=torch.long).cuda(gpu)
+    decoder_in_tensor = torch.zeros(ed-st, max_decoder_length, dtype=torch.long).cuda(gpu)
     
     for i, seq in enumerate(encoder_in):
         for t, word in enumerate(seq):
@@ -100,7 +95,7 @@ def to_batch_sequence(pairs, voc, st, ed, perm, device):
 
 
 
-def epoch_accuray(model, batch_size, pairs, voc, device, n_gpus):
+def epoch_accuray(model, batch_size, pairs, voc, gpu):
 
     UNK_token = 3
     
@@ -121,12 +116,7 @@ def epoch_accuray(model, batch_size, pairs, voc, device, n_gpus):
         
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
-        encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(pairs, voc, st, ed, indexes, device)
-
-        if torch.cuda.is_available() and n_gpus > 1:
-            encoder_in = encoder_in.to(0)
-            decoder_in = decoder_in.to(0)
-            mask = mask.to(0)
+        encoder_in, decoder_in, enc_length, seq_length, _ = to_batch_sequence(pairs, voc, st, ed, indexes, gpu)
 
         dec_len = decoder_in.size()[1]
 

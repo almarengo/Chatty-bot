@@ -5,23 +5,21 @@ from model.utils.net_utils import *
 
 class Encoder(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, device):
+    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout):
         
         super(Encoder, self).__init__()
         
         self.batch_size = batch_size
         self.hidden_size = hidden_size
         self.embedding_dim = embedding_dim
-        self.embedding = nn.Embedding(vocabolary_size, embedding_dim, device=device)
-        weights_matrix = torch.tensor(weights_matrix, device = device)
+        self.embedding = nn.Embedding(vocabolary_size, embedding_dim)
+        weights_matrix = torch.tensor(weights_matrix)
         self.embedding.load_state_dict({'weight': weights_matrix})
         self.embedding.weight.requires_grad = True
-        self.embedding.to(device)
-        #self.embedding.from_pretrained(torch.from_numpy(weights_matrix).to(device))
-        self.gru = nn.GRU(embedding_dim, hidden_size, dropout=dropout, batch_first=True).to(device)
-        self.x = torch.empty(10, dtype=torch.long, device=device)
-        self.y = torch.empty(10, dtype=torch.long, device=device)
-        self.device = device
+        self.gru = nn.GRU(embedding_dim, hidden_size, dropout=dropout, batch_first=True)
+        self.x = torch.empty(10, dtype=torch.long)
+        self.y = torch.empty(10, dtype=torch.long)
+    
     
     def forward(self, input, enc_len, hidden=None):
         
@@ -60,32 +58,26 @@ class Encoder(nn.Module):
 
         sort_ret_s, sort_ret_h = lstm(lstm_inp, lstm_hidden)
         ret_s = nn.utils.rnn.pad_packed_sequence(sort_ret_s, batch_first=True, total_length=total_length)[0][sort_perm_inv]
-        
         ret_h = sort_ret_h[:, sort_perm_inv]
+
         return ret_s, ret_h
     
-    def initHidden(self):
-
-        return torch.zeros(1, self.batch_size, self.hidden_size, device=self.device)
-    
-
 
 
 class Attention(nn.Module):
     
-    def __init__(self, hidden_size, method, device):
+    def __init__(self, hidden_size, method):
 
         super(Attention, self).__init__()
 
         self.method = method
-        self.device = device
         if self.method not in ['dot', 'general', 'concat']:
             raise ValueError(self.method, 'is not an implemented in this model')
         self.hidden_size = hidden_size
         if self.method == 'general':
-            self.attn = nn.Linear(hidden_size, hidden_size, device=device)
+            self.attn = nn.Linear(hidden_size, hidden_size)
         if self.method == 'concat': 
-            self.attn = nn.Linear(hidden_size*2, hidden_size, device=device)
+            self.attn = nn.Linear(hidden_size*2, hidden_size)
             self.v = nn.Parameter(torch.FloatTensor(hidden_size))
 
     def dot_score(self, hidden, encoder_outputs):
@@ -103,7 +95,7 @@ class Attention(nn.Module):
         # Pass results through a linear layer to (B x T x H) and tanh activation function
         energy = self.attn(torch.cat((hidden.expand(-1, encoder_outputs.size(1), -1), encoder_outputs), 2)).tanh()
         # Multiply scalar v and energy (H)*(B x T x H) = (B x T x H) and sums along last dimension to (B x T)
-        return torch.sum(self.v.to(hidden.device)*energy, dim=2)
+        return torch.sum(self.v*energy, dim=2)
 
         
     def forward(self, hidden, encoder_outputs):
@@ -127,7 +119,7 @@ class Attention(nn.Module):
 
 class Decoder(nn.Module):
     
-    def __init__(self, embedding_dim, hidden_size, output_size, dropout, method, device):
+    def __init__(self, embedding_dim, hidden_size, output_size, dropout, method):
         
         super(Decoder, self).__init__()
         
@@ -135,12 +127,12 @@ class Decoder(nn.Module):
         self.hidden_size = hidden_size
         self.output_size = output_size
         
-        self.embedding = nn.Embedding(output_size, self.embedding_dim, device=device)
+        self.embedding = nn.Embedding(output_size, self.embedding_dim)
         self.dropout = nn.Dropout(dropout, inplace=True)
-        self.attention = Attention(hidden_size, method, device)
-        self.gru = nn.GRU(embedding_dim, hidden_size, dropout=dropout, batch_first=True).to(device)
-        self.concat = nn.Linear(hidden_size*2, hidden_size, device=device)
-        self.out = nn.Linear(hidden_size, output_size, device=device)
+        self.attention = Attention(hidden_size, method)
+        self.gru = nn.GRU(embedding_dim, hidden_size, dropout=dropout, batch_first=True)
+        self.concat = nn.Linear(hidden_size*2, hidden_size)
+        self.out = nn.Linear(hidden_size, output_size)
         self.tan = nn.Tanh()
         
     
@@ -167,121 +159,5 @@ class Decoder(nn.Module):
         concat_output = self.tan(self.concat(concat_input))
         # Runs through a linear to (B x Voc)
         output = self.out(concat_output)
-        
-        return output, hidden, attn_weights
-
-
-class AttentionDecoder(nn.Module):
-    
-    def __init__(self, embedding_dim, hidden_size, output_size, dropout, device):
-        
-        super(AttentionDecoder, self).__init__()
-        
-        self.embedding_dim = embedding_dim
-        self.hidden_size = hidden_size
-        self.output_size = output_size
-        
-        self.embedding = nn.Embedding(output_size, self.embedding_dim, device=device)
-        self.dropout = nn.Dropout(dropout, inplace=True)
-        self.attn = nn.Linear(hidden_size+embedding_dim, hidden_size, device=device)
-        self.attn_combine = nn.Linear(hidden_size+embedding_dim, hidden_size, device=device)
-        self.gru = nn.GRU(hidden_size, hidden_size, dropout=dropout, batch_first=True).to(device)
-        #self.out = nn.Linear(hidden_size, output_size, device=device)
-        self.out = nn.Sequential(nn.Tanh(), nn.Linear(hidden_size, output_size, device=device))
-        self.softmax = nn.Softmax(dim=1)
-        self.relu = nn.ReLU()
-        
-    
-    def forward(self, input, last_hidden, encoder_outputs):
-        
-        # Reads input size (1 x B) and embed to (1 x B x H_emb)
-        embedded = self.embedding(input)
-        # Apply dropout
-        embedded = self.dropout(embedded)
-        # Sums the embedded and hidden (1 x B x (H_emb + H)) and pass it through a linear layer (1 x B x H)
-        attn_embedded = self.attn(torch.cat([embedded, last_hidden], 2))
-        # Transpose attn_embedded to (B x 1 x H)
-        attn_embedded = attn_embedded.transpose(0, 1)
-        # Multiply the attention embedded by the encoder_outputs (B x 1 x H) x (B x H x T) = (B x 1 x T)
-        att_score = attn_embedded.bmm(encoder_outputs.transpose(1, 2))
-        # Squeeze to (B x T)
-        att_score = att_score.squeeze(1)
-        # Returns the softmax function (B x T)
-        attn_weights = self.softmax(att_score)
-        # Unsqueeze (B x 1 x T)
-        attn_weights = attn_weights.unsqueeze(1)
-        # Multiply the attention weights by the encoder_outputs (B x 1 x T) x (B x T x H) = (B x 1 x H)
-        att_applied = attn_weights.bmm(encoder_outputs)
-        # Transpose aembedded to (B x 1 x H_emb)
-        embedded = embedded.transpose(0, 1)
-        # Sums the att_applied and decoder input embedded (B x 1 x (H_emb + H))
-        rnn_input = torch.cat([embedded, att_applied], 2)
-        # Runs the rnn_input through a linear layer (B x 1 x H)
-        rnn_input = self.attn_combine(rnn_input)
-        # Returns the RELU (B x 1 x H)
-        rnn_input = self.relu(rnn_input)
-        # Runs the GRU layer with output (B x 1 x H)
-        output, hidden = self.gru(rnn_input, last_hidden)
-        # Squeeze decoder output to (B x H)
-        output = output.squeeze(1)
-        # Runs the output through a linear layer (B x N_out)
-        output = self.out(output)
-        
-        return output, hidden, attn_weights
-
-
-class AttentionDecoder_base(nn.Module):
-    
-    def __init__(self, embedding_dim, hidden_size, output_size, dropout, device):
-        
-        super(AttentionDecoder_base, self).__init__()
-        
-        self.embedding_dim = embedding_dim
-        self.hidden_size = hidden_size
-        self.output_size = output_size
-        self.device = device
-        self.embedding = nn.Embedding(output_size, self.embedding_dim, device=device)
-        self.dropout = nn.Dropout(dropout, inplace=True)
-        #self.attn = nn.Linear(hidden_size+embedding_dim, hidden_size, device=device)
-        self.attn_combine = nn.Linear(hidden_size+embedding_dim, hidden_size, device=device)
-        self.gru = nn.GRU(hidden_size, hidden_size, dropout=dropout, batch_first=True).to(device)
-        #self.out = nn.Linear(hidden_size, output_size, device=device)
-        self.out = nn.Sequential(nn.Tanh(), nn.Linear(hidden_size, output_size, device=device))
-        self.softmax = nn.Softmax(dim=1)
-        self.relu = nn.ReLU()
-        
-    
-    def forward(self, input, last_hidden, encoder_outputs):
-
-        enc_len = encoder_outputs.size()[1]
-        attn = nn.Linear(self.hidden_size+self.embedding_dim, enc_len, device=self.device)
-        # Reads input size (1 x B) and embed to (1 x B x H_emb)
-        embedded = self.embedding(input)
-        # Apply dropout
-        embedded = self.dropout(embedded)
-        # Sums the embedded and hidden (1 x B x (H_emb + H)) and pass it through a linear layer (1 x B x T)
-        attn_embedded = attn(torch.cat([embedded, last_hidden], 2))
-        # Squeeze attn_embedded to (B x T)
-        attn_embedded = attn_embedded.squeeze(0)
-        # Returns the softmax function (B x T)
-        attn_weights = self.softmax(attn_embedded)
-        # Unsqueeze to (B x 1 x T)
-        attn_weights = attn_weights.unsqueeze(1)
-        # Multiply the attention weights by the encoder_outputs (B x 1 x T) x (B x T x H) = (B x 1 x H)
-        att_applied = attn_weights.bmm(encoder_outputs)
-        # Transpose aembedded to (B x 1 x H_emb)
-        embedded = embedded.transpose(0, 1)
-        # Sums the att_applied and decoder input embedded (B x 1 x (H_emb + H))
-        rnn_input = torch.cat([embedded, att_applied], 2)
-        # Runs the rnn_input through a linear layer (B x 1 x H)
-        rnn_input = self.attn_combine(rnn_input)
-        # Returns the RELU (B x 1 x H)
-        rnn_input = self.relu(rnn_input)
-        # Runs the GRU layer with output (B x 1 x H)
-        output, hidden = self.gru(rnn_input, last_hidden)
-        # Squeeze decoder output to (B x H)
-        output = output.squeeze(1)
-        # Runs the output through a linear layer (B x N_out)
-        output = self.out(output)
         
         return output, hidden, attn_weights

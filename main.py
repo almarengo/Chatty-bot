@@ -3,6 +3,7 @@ import os
 import torch
 import torch.multiprocessing as mp
 from train import train
+from train_plot import train_plot
 
 def main():
     parser = argparse.ArgumentParser()
@@ -27,12 +28,10 @@ def main():
             help='If set, apply concatenation attention.')
     parser.add_argument('--sgd', action='store_true', 
             help='If set, apply SGD optimizer.')
+    parser.add_argument('--plot', action='store_true', 
+            help='If set, show plots.')
     args = parser.parse_args()
 
-
-    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-
-    print(f'On this machine you have {device}') 
 
     
     print('__pyTorch VERSION:', torch.__version__)
@@ -41,22 +40,18 @@ def main():
     print('__Number CUDA Devices:', torch.cuda.device_count())
     print('__Devices')
     
-    if torch.cuda.is_available():
-        print('Active CUDA Device: GPU', torch.cuda.current_device())
-
     n_gpus = torch.cuda.device_count()
+    assert n_gpus < args.gpus, f'This device has more GPUs than you passed in the arguments. You passed {args.gpus} but you have {n_gpus}'
 
-    if n_gpus > args.gpus:
-            print(f'This device has more GPUs than you passed in the arguments. You passed {args.gpus} but you have {n_gpus}')
+    args.world_size = args.gpus * args.nodes    
 
-    args.world_size = args.gpus * args.nodes                
     os.environ['MASTER_ADDR'] = 'localhost'              
     os.environ['MASTER_PORT'] = '12355'
 
-    if torch.cuda.is_available():                      
-        mp.spawn(train, nprocs=args.gpus, args=(args,))
+    if args.plot:                      
+        mp.spawn(train_plot, nprocs=args.gpus, args=(args,))
     else:
-        print('Need to build a train for CPU')
+        mp.spawn(train, nprocs=args.gpus, args=(args,))
 
 
 if __name__ == '__main__':
