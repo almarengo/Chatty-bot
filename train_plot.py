@@ -1,5 +1,5 @@
 import os
-from datetime import datetime
+import datetime
 import argparse
 from model.utils.load_utils import prepare_data
 from model.utils.train_utils import *
@@ -33,48 +33,61 @@ def train_plot(gpu, args):
     dropout = 0.2
     lr = 0.0005
 
-    if args.n_epochs:
+    if args.epochs:
         n_epochs=args.epochs
-        print(f'Epochs training: {args.n_epochs}')
+        if gpu == 0:
+            print(f'Epochs training: {args.epochs}', flush=True)
     else:
         n_epochs=100
-        print(f'Epochs training: 100')
+        if gpu == 0:
+            print(f'Epochs training: 100', flush=True)
 
     if args.batch_size:
         batch_size=args.batch_size
-        print(f'Batch size: {args.batch_size}')
+        if gpu == 0:
+            print(f'Batch size: {args.batch_size}', flush=True)
     else:
         batch_size=32
-        print(f'Batch size: 32')
+        if gpu == 0:
+            print(f'Batch size: 32', flush=True)
     
     if args.toy:
         use_small=True
-        print('Using small')
+        if gpu == 0:
+            print('Using small', flush=True)
     else:
         use_small=False
-        print('Using big')
+        if gpu == 0:
+            print('Using big', flush=True)
 
     if args.dot:
         att = 'dot'
-        print('Using dot attention')
+        if gpu == 0:
+            print('Using dot attention', flush=True)
     if args.general:
         att = 'general'
-        print('Using general attention')
+        if gpu == 0:
+            print('Using general attention', flush=True)
     if args.concat:
         att = 'concat'
-        print('Using concat attention')
+        if gpu == 0:
+            print('Using concat attention', flush=True)
     else:
         att = 'general'
-        print('Using general attention')
+        if gpu == 0:
+            print('Using general attention', flush=True)
     
 
     voc, train_pairs, vector = prepare_data('train', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
     _, val_pairs, _ = prepare_data('validation', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
+    train_pairs = split_dataset(train_pairs, args.world_size, gpu)
+    val_pairs = split_dataset(val_pairs, args.world_size, gpu)
+
     matrix_len = voc.n_words
     weights_matrix = np.zeros((matrix_len, N_word))
-    word_found = 0
+    
     for i, word in enumerate(voc.word2index):
         try:
             weights_matrix[i] = vector[word]
@@ -85,108 +98,128 @@ def train_plot(gpu, args):
     model = Seq2Seq(batch_size, voc.n_words, N_word, hidden_size, weights_matrix, dropout, att)
 
     if args.pre_trained:
-        print('Loading pre-trained model')
-        model.load_state_dict(torch.load('pre-trained/seq2seq_model'))
+        if gpu == 0:
+            print('Loading pre-trained model', flush=True)
+            model.load_state_dict(torch.load('pre-trained/seq2seq_model'))
     else:
-        print('Initializing model')
+        if gpu == 0:
+            print('Initializing model', flush=True)
         
 
     torch.cuda.set_device(gpu)
     model.cuda(gpu)
     model = nn.parallel.DistributedDataParallel(model, device_ids=[gpu])
+    model = model.module
 
     if args.sgd:
         optimizer = 'SGD'
-        print('Using SGD Optimizer')
+        if gpu == 0:
+            print('Using SGD Optimizer', flush=True)
     else:
         optimizer = 'Adam'
-        print('Using Adam Optimizer')
+        if gpu == 0:
+            print('Using Adam Optimizer', flush=True)
 
     if optimizer == 'Adam':
         optimizer = torch.optim.Adam(model.parameters(), lr=lr)
     else:
         optimizer = torch.optim.SGD(model.parameters(), lr=lr, momentum=0.9)
     
-    xdata = []
-    ydata1 = []
-    ydata2 = []
-    ydata3 = []
-    
-    plt.show()
-    plt.style.use('ggplot') 
+    if gpu ==0:
+        xdata = []
+        ydata1 = []
+        ydata2 = []
+        ydata3 = []
+        
+        plt.show()
+        plt.style.use('ggplot') 
 
-    fig, (ax1, ax2) = plt.subplots(2, 1)
+        fig, (ax1, ax2) = plt.subplots(2, 1)
 
-    line1, = ax1.plot(xdata, ydata1, color='red')
-    line2, = ax2.plot(xdata, ydata2, color='blue', label='Train Accuracy')
-    line3, = ax2.plot(xdata, ydata3, color='orange', label='Val Accuracy')
-    ax2.set_xlabel('Epoch')
-    ax1.set_ylabel('Loss')
-    ax2.set_ylabel('Accuracy')
-    ax1.set_title('Train Loss')
-    ax2.set_title('Accuracy')
-    fig.legend(loc=4)
-    fig.tight_layout()
+        line1, = ax1.plot(xdata, ydata1, color='red')
+        line2, = ax2.plot(xdata, ydata2, color='blue', label='Train Accuracy')
+        line3, = ax2.plot(xdata, ydata3, color='orange', label='Val Accuracy')
+        ax2.set_xlabel('Epoch')
+        ax1.set_ylabel('Loss')
+        ax2.set_ylabel('Accuracy')
+        ax1.set_title('Train Loss')
+        ax2.set_title('Accuracy')
+        fig.legend(loc=4)
+        fig.tight_layout()
 
-    max_plot1 = 0
-    max_plot2 = 0
+        max_plot1 = 0
+        max_plot2 = 0
     
     #for epoch in tqdm(range(1, n_epochs+1), desc="Total epochs: "):
     for epoch in range(1, n_epochs+1):
 
-        print(f'Epoch {epoch}: {datetime.datetime.now()}')
+        if gpu == 0:
+            print(f'Epoch {epoch}: {datetime.datetime.now()}', flush=True)
 
         # Calculte loss
         loss = epoch_train(model, optimizer, batch_size, train_pairs, voc, gpu)
 
         # Gather and average the loss
-        #############################################
-        
-        print(f'Loss: {loss}')
+        dist.all_reduce(loss, op=dist.ReduceOp.SUM)
+
+        if gpu == 0:
+            print(f'Loss: {loss/args.world_size}', flush=True)
 
         # Calculate accuracy
         train_accuracy = epoch_accuray(model, batch_size, train_pairs, voc, gpu)
         val_accuracy = epoch_accuray(model, batch_size, val_pairs, voc, gpu)
 
         # Gather and average accuracies
-        #####################################################################################
+        dist.all_reduce(train_accuracy, op=dist.ReduceOp.SUM)
+        dist.all_reduce(val_accuracy, op=dist.ReduceOp.SUM)
 
-        print(f'Train accuracy: {train_accuracy}')
-        print(f'Validation accuracy: {val_accuracy}')
+        if gpu == 0:
+            print(f'Train accuracy: {train_accuracy.item()/args.world_size}', flush=True)
+            print(f'Validation accuracy: {val_accuracy.item()/args.world_size}', flush=True)
 
         if epoch % 100 == 0:
             # Calculate BLEU Score
             BLEU_model = CalculateBleu(model, batch_size, train_pairs, voc, gpu)
             bleu_score = BLEU_model.score()
-            print(f'BLUE score: {bleu_score}')
+            dist.all_reduce(bleu_score, op=dist.ReduceOp.SUM)
+            if gpu == 0:
+                print(f'BLUE score: {bleu_score.item()/args.world_size}', flush=True)
 
-            # Save model
-            torch.save(model.state_dict(), f'saved_model/seq2seq_{epoch}_{att}')
+            if gpu == 0:
+                # Save model
+                torch.save(model.state_dict(), f'saved_model/seq2seq_{epoch}_{att}')
 
-        # Plot model
-        if loss > max_plot1:
-            max_plot1 = np.ceil(loss)
-        if train_accuracy > max_plot2:
-            max_plot2 = np.round(train_accuracy+0.05, decimals=1)
-        if val_accuracy > max_plot2:
-            max_plot2 = np.round(val_accuracy+0.05, decimals=1)
-    
-        xdata.append(epoch)
-        ydata1.append(loss)
-        ydata2.append(train_accuracy)
-        ydata3.append(val_accuracy)
-        line1.set_xdata(xdata)
-        line1.set_ydata(ydata1)
-        line2.set_xdata(xdata)
-        line2.set_ydata(ydata2)
-        line3.set_xdata(xdata)
-        line3.set_ydata(ydata3)
-        ax1.set_xlim(0, epoch)
-        ax1.set_ylim(0, max_plot1)
-        ax2.set_xlim(0, epoch)
-        ax2.set_ylim(0, max_plot2)
-        plt.draw()
-        plt.pause(5)
+        if gpu == 0:
+            loss= loss.item()/args.world_size
+            train_accuracy = train_accuracy.item()/args.world_size
+            val_accuracy = val_accuracy.item()/args.world_size
 
-    print(f"Optimization ended successfully")
-    plt.show()   
+            # Plot model
+            if loss > max_plot1:
+                max_plot1 = np.ceil(loss)
+            if train_accuracy > max_plot2:
+                max_plot2 = np.round(train_accuracy+0.05, decimals=1)
+            if val_accuracy > max_plot2:
+                max_plot2 = np.round(val_accuracy+0.05, decimals=1)
+        
+            xdata.append(epoch)
+            ydata1.append(loss)
+            ydata2.append(train_accuracy)
+            ydata3.append(val_accuracy)
+            line1.set_xdata(xdata)
+            line1.set_ydata(ydata1)
+            line2.set_xdata(xdata)
+            line2.set_ydata(ydata2)
+            line3.set_xdata(xdata)
+            line3.set_ydata(ydata3)
+            ax1.set_xlim(0, epoch)
+            ax1.set_ylim(0, max_plot1)
+            ax2.set_xlim(0, epoch)
+            ax2.set_ylim(0, max_plot2)
+            plt.draw()
+            plt.pause(5)
+
+
+    if gpu == 0:
+        print("Optimization ended successfully", flush=True)
+        plt.show()   

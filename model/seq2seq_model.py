@@ -7,7 +7,7 @@ from model.utils.net_utils import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, method, gpu):
+    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, method):
         
         super(Seq2Seq, self).__init__()
         
@@ -18,7 +18,6 @@ class Seq2Seq(nn.Module):
         self.SOS_token = 1
         self.EOS_token = 2
         self.PAD_token = 0
-        self.gpu = gpu
 
     
     def forward(self, src, trg, enc_length, seq_length, teacher_forcing_ratio = 0.8):
@@ -63,7 +62,7 @@ class Seq2Seq(nn.Module):
 
 
 
-    def loss(self, decoder_outputs, trg, mask):
+    def loss(self, decoder_outputs, trg, mask, gpu):
 
         print_losses = []
         n_totals = 0
@@ -72,7 +71,7 @@ class Seq2Seq(nn.Module):
         for idx in range(dec_len):
             nTotal = mask[:, idx].sum().item()
             
-            crossEntropy = -torch.log(torch.gather(decoder_outputs[:, idx, :], 1, trg[:, idx].view(-1, 1)).squeeze(1)).cuda(self.gpu)
+            crossEntropy = -torch.log(torch.gather(decoder_outputs[:, idx, :], 1, trg[:, idx].view(-1, 1)).squeeze(1)).cuda(gpu)
             
             lossi = crossEntropy.masked_select(mask[:, idx].view(-1, 1)).mean()
             loss += lossi

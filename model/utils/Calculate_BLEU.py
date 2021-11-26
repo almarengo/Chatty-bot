@@ -58,5 +58,5 @@ class CalculateBleu():
 
         bleu = bleu_score.corpus_bleu(references, hypotheses, smoothing_function=bleu_score.SmoothingFunction().method1)
 
-        return bleu
+        return torch.tensor(bleu).to(encoder_in.device)
         

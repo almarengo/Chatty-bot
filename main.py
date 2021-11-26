@@ -41,7 +41,8 @@ def main():
     print('__Devices')
     
     n_gpus = torch.cuda.device_count()
-    assert n_gpus < args.gpus, f'This device has more GPUs than you passed in the arguments. You passed {args.gpus} but you have {n_gpus}'
+    assert torch.cuda.is_available() == True, "You don't have a GPU, please use the python scripts in ./cpu_train/"
+    assert n_gpus == args.gpus, f'This device has a different number of GPUs than you passed in the arguments. You passed {args.gpus} but you have {n_gpus} GPUs'
 
     args.world_size = args.gpus * args.nodes    
 
