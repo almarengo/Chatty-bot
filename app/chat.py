@@ -3,7 +3,7 @@ sys.path.insert(1, '../')
 
 from model.model import Model
 
-from app.predictions import *
+from predictions import *
 import torch
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
@@ -12,6 +12,12 @@ model.load_state_dict(torch.load('../saved_model/seq2seq_500_concat', map_locati
 model.eval()
 
 
+def get_response(sentence):
+    inp, enc_len = encode(model, sentence)
+    prediction = model.predict(inp, enc_len)
+    resp = decode(model, prediction)
+    return resp
+
 if __name__ == '__main__':
     print("Let's chat! (type 'quit' to exit)")
     while True:
@@ -19,8 +25,6 @@ if __name__ == '__main__':
         if sentence == 'quit':
             break
 
-        inp, enc_len = encode(model, sentence)
-        prediction = model.predict(inp, enc_len)
-        resp = decode(model, prediction)
+        resp = get_response(sentence)
 
         print(f'Bot: {resp}')    
