@@ -79,16 +79,20 @@ def sentence_cleaning(sentence):
     return sentence
 
 
-def load_file(name):
-    lines = open(f'data/{name}/dialogues_{name}.txt', encoding='utf-8').read().strip().split('\n')
+def load_file(name, training):
+    if training:
+        lines = open(f'data/{name}/dialogues_{name}.txt', encoding='utf-8').read().strip().split('\n')
+    else:
+        lines = open(f'../data/{name}/dialogues_{name}.txt', encoding='utf-8').read().strip().split('\n')
     return lines
 
 
-def Read_data(dataset,  glove_file_path, small):
+def Read_data(dataset,  glove_file_path, small, training=True):
     
-    print(f'Reading {dataset} -------')
+    if training:
+        print(f'Reading {dataset} -------')
     # Load one of the three datasets train, test or validation and return a list of all the lines
-    lines = load_file(dataset)
+    lines = load_file(dataset, training)
     # Split each line into sentence and create a list of list
     list_sentences = [[sentence for sentence in line.split('\n')] for line in lines]
     list_sentences = [[sentence for sentence in str(line).strip(']["').split(' __eou__ ')] for line in list_sentences]
@@ -144,7 +148,7 @@ def Read_data(dataset,  glove_file_path, small):
 
 
 def prepare_data(dataset, glove_file_path, small=True):
-    voc, pairs, word_vector = Read_data(dataset, glove_file_path, small)
+    voc, pairs, word_vector = Read_data(dataset, glove_file_path, small, training=True)
     # Adding EOS in answers
     pairs = [[line[0], line[1]+' EOS'] for line in pairs]
     print(f'Read {len(pairs)} sentence pairs')
@@ -155,5 +159,16 @@ def prepare_data(dataset, glove_file_path, small=True):
     
     print('Counted words:')
     print(f'In {voc.name}: {voc.n_words} words')
+    
+    return voc, pairs, word_vector
+
+
+def prepare_data_model(dataset, glove_file_path, small=True):
+    voc, pairs, word_vector = Read_data(dataset, glove_file_path, small, training=False)
+    # Adding EOS in answers
+    pairs = [[line[0], line[1]+' EOS'] for line in pairs]
+    for pair in pairs:
+        voc.add_sentence(pair[0])
+        voc.add_sentence(pair[1])
     
     return voc, pairs, word_vector
