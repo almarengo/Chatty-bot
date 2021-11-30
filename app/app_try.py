@@ -17,19 +17,16 @@ from chat import get_response
 
 app = Flask(__name__)
 
-@app.route('/', methods=['GET'])
-def index_get():
-    return render_template('base.html')
-
 
 @app.route('/predict', methods=['POST'])
-def predict():
-    text = request.get_json(force=True).get("message")
-    print(text)
-    response = get_response(text)
-    message = {"answer": response}
-    return jsonify(message)
+def hello():
+    sentence = request.get_json(force=True).get("message")
+    print(f'Data sent in request:{sentence}')
+
+    resp = get_response(sentence)
+
+    return jsonify(resp)
 
 
 if __name__ == '__main__':
-    app.run(debug=True)
+    app.run()
