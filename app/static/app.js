@@ -4,7 +4,7 @@ class Chatbox{
 
             openButton: document.querySelector('.chatbox__button'),
             chatBox: document.querySelector('.chatbox__support'),
-            sendButoon: document.querySelector('.send__button')
+            sendButton: document.querySelector('.send__button')
         }
 
         this.state = false;
@@ -57,20 +57,21 @@ class Chatbox{
         })
         .then(r => r.json())
         .then(r => {
-            let msg2 = {name: "Sam", message: r.answer};
+            let msg2 = { name: "Sam", message: r.answer };
             this.messages.push(msg2);
             this.updateChatText(chatbox)
             textField.value = ''
+
         }).catch((error) => {
             console.error('Error:', error);
             this.updateChatText(chatbox)
-            textField.value = 'Piciu'
+            textField.value = ''
         });
     }
 
-    updateChatText(chatbot) {
+    updateChatText(chatbox) {
         var html = '';
-        this.message.slice().reverse().forEach(function(item,) {
+        this.messages.slice().reverse().forEach(function(item) {
             if (item.name === "Sam")
             {
                 html += '<div class="messages__item messages__item--visitor">' + item.message + '</div>'
@@ -79,7 +80,7 @@ class Chatbox{
             {
                 html += '<div class="messages__item messages__item--operator">' + item.message + '</div>'
             }
-        });
+          });
 
         const chatmessage = chatbox.querySelector('.chatbox__messages');
         chatmessage.innerHTML = html;

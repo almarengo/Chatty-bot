@@ -25,9 +25,9 @@ def index_get():
 @app.route('/predict', methods=['POST'])
 def predict():
     text = request.get_json(force=True).get("message")
-    print(text)
     response = get_response(text)
     message = {"answer": response}
+    print(message)
     return jsonify(message)
 
 
