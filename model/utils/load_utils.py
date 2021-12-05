@@ -33,14 +33,14 @@ class Voc:
 
 
 
-def load_glove(file_path, small=True):
+def load_glove(file_path):
     idx = 4
     vectors = {}
     word2idx = {}
     with open(file_path, encoding='utf8') as lines:
         for line in lines:
             # Load only 10000 words if small is called
-            if small and idx > 10000:
+            if  idx > 10000:
                 break
             # Split the line at the spaces and create a list where first is word and next is the word embedding vectors
             line = line.split()
@@ -95,18 +95,26 @@ def sentence_cleaning(sentence):
     return sentence
 
 
-def load_file(name, training):
+def load_file(name, small, training):
     if training:
         data = []
         lines = open(f'data/{name}.txt', "r")
+        idx = 0
         for line in lines:
+            if small and idx > 5000:
+                break
             data.append(line.strip()+' ')
+            idx += 1
         lines.close()
     else:
         data = []
         lines = open(f'../data/{name}.txt', "r")
+        idx = 0
         for line in lines:
+            if idx > 5000:
+                break
             data.append(line.strip()+' ')
+            idx += 1
         lines.close()
     return data
 
@@ -116,7 +124,7 @@ def Read_data(dataset, glove_file_path, small, training=True):
     if training:
         print(f'Reading {dataset} -------')
     # Load one of the three datasets train, test or validation and return a list of all the lines
-    lines = load_file(dataset, training)
+    lines = load_file(dataset, small, training)
     for line in lines:
         line = line.split(' __eou__ ')
         for idx in range(len(line)-1):
@@ -129,7 +137,7 @@ def Read_data(dataset, glove_file_path, small, training=True):
                     pairs.append([inputLine, targetLine])
     # Load GloVe vectors
     try:
-        glove_vectors, glove_word2idx = load_glove(glove_file_path, small)
+        glove_vectors, glove_word2idx = load_glove(glove_file_path)
     except:
         glove_vectors = None
     # Initialize the classes questions and answers to assign indexes and count the words
