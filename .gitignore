@@ -3,3 +3,5 @@ Jupyter_support/
 plotting_example_support/
 .ipynb_checkpoints/
 saved_model/
+data/old/
+model/utils/old

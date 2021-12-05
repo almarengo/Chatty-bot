@@ -2,6 +2,7 @@
 import re
 import unicodedata
 import numpy as np
+from model.utils.contractions import contractions
 
 
 class Voc:
@@ -68,12 +69,27 @@ def UnicodeToASCII(s):
    return ''.join(c for c in unicodedata.normalize('NFD', s)
                   if unicodedata.category(c) != 'Mn')
 
+def decontracted(text):
+    for word in text.split():
+        if word.lower() in contractions:
+            text = text.replace(word, contractions[word.lower()])
+    
+    if '/' in text:
+        if ' i ' in text:
+            text = text.replace('are not', '')
+        else:
+            text = text.replace('am not', '')
+    return text
 
 def sentence_cleaning(sentence):
     # Transforms to ASCII, lower case and strip blank spaces
     sentence = UnicodeToASCII(sentence)
+    sentence = decontracted(sentence.lower().strip())
+    sentence = re.sub(r"in(')", "ing", sentence)
     # Get rid of double puntuation
-    sentence = re.sub(r"([.!?]+)\1", r"\1", sentence.lower().strip())
+    sentence = re.sub(r"([.!?]+)\1", r"\1", sentence)
+    sentence = re.sub('([.,!?()])', r' \1 ', sentence)
+    sentence = re.sub('\s{2,}', ' ', sentence)
     # Get rid of non-letter character
     sentence = re.sub(r"[^a-zA-Z0-9.!?']+", r" ", sentence)
     return sentence
@@ -81,94 +97,80 @@ def sentence_cleaning(sentence):
 
 def load_file(name, training):
     if training:
-        lines = open(f'data/{name}/dialogues_{name}.txt', encoding='utf-8').read().strip().split('\n')
+        data = []
+        lines = open(f'data/{name}.txt', "r")
+        for line in lines:
+            data.append(line.strip()+' ')
+        lines.close()
     else:
-        lines = open(f'../data/{name}/dialogues_{name}.txt', encoding='utf-8').read().strip().split('\n')
-    return lines
+        data = []
+        lines = open(f'../data/{name}.txt', "r")
+        for line in lines:
+            data.append(line.strip()+' ')
+        lines.close()
+    return data
 
 
-def Read_data(dataset,  glove_file_path, small, training=True):
-    
+def Read_data(dataset, glove_file_path, small, training=True):
+    pairs = []
     if training:
         print(f'Reading {dataset} -------')
     # Load one of the three datasets train, test or validation and return a list of all the lines
     lines = load_file(dataset, training)
-    # Split each line into sentence and create a list of list
-    list_sentences = [[sentence for sentence in line.split('\n')] for line in lines]
-    list_sentences = [[sentence for sentence in str(line).strip(']["').split(' __eou__ ')] for line in list_sentences]
-    # Assumes odd sentences being the source aka question and even sentences the target aka answer, still in a list of list format
-    #source_sentences_list = [[source for source in sentence if sentence.index(source)%2 == 0] for sentence in list_sentences]
-    #target_sentences_list = [[source for source in sentence if sentence.index(source)%2 != 0] for sentence in list_sentences]
-
-    # If number of sentences is odd add an EMPTY line at the end
-    for sentence in list_sentences:
-        if len(sentence)%2 != 0:
-            sentence.append('EOS')
-
-    # Remove __eou__ at the end of sentences
-    for idx in range(len(list_sentences)):
-        for u_idx in range(len(list_sentences[idx])):
-            if '__eou__' in list_sentences[idx][u_idx]:
-                list_sentences[idx][u_idx] = list_sentences[idx][u_idx].replace(' __eou__', '')
-
-    source_sentences_list = []
-    for idx in range(len(list_sentences)):
-        source_list = []
-        for u_idx in range(len(list_sentences[idx])):
-            if u_idx%2 == 0:
-                source_list.append(list_sentences[idx][u_idx])
-        source_sentences_list.append(source_list)
-
-    target_sentences_list = []
-    for idx in range(len(list_sentences)):
-        target_list = []
-        for u_idx in range(len(list_sentences[idx])):
-            if u_idx%2 != 0:
-                target_list.append(list_sentences[idx][u_idx])
-        target_sentences_list.append(target_list)
-    # Flattens the list to have all the questions in one list
-    source_sentences = [sentence for row in source_sentences_list for sentence in row]
-    # Flattens the list to have all the answers in one list
-    target_sentences = [sentence for row in target_sentences_list for sentence in row]
-    # Creates a pair of question-answer as a list of list
-    pairs = [[sentence_cleaning(question), sentence_cleaning(answer)] for question, answer in zip(source_sentences, target_sentences)]
-
-    # Pad empty sentences
-    #pairs = [['EMPTY', line[1]] if line[0] == '' else line for line in pairs]
-    #pairs = [[line[0], 'EMPTY'] if line[1] == '' else line for line in pairs]
-    # Pad spaces
-    #pairs = [['EMPTY', line[1]] if line[0] == ' ' else line for line in pairs]
-    #pairs = [[line[0], 'EMPTY'] if line[1] == ' ' else line for line in pairs]
+    for line in lines:
+        line = line.split(' __eou__ ')
+        for idx in range(len(line)-1):
+            inputLine = sentence_cleaning(line[idx]).strip()
+            targetLine = sentence_cleaning(line[idx+1]).strip()
+            if inputLine and targetLine:
+                if re.search(r"(\d+)?\s?(continued)$", inputLine) or re.search(r"(\d+)?\s?(continued)$", targetLine):
+                    continue
+                else:
+                    pairs.append([inputLine, targetLine])
     # Load GloVe vectors
-    glove_vectors, glove_word2idx = load_glove(glove_file_path, small)
+    try:
+        glove_vectors, glove_word2idx = load_glove(glove_file_path, small)
+    except:
+        glove_vectors = None
     # Initialize the classes questions and answers to assign indexes and count the words
-    vocabulary = Voc('vocabulary', glove_word2idx)
-
-    return vocabulary, pairs, glove_vectors
+    if glove_vectors:
+        vocabulary = Voc('vocabulary', glove_word2idx)
+        return vocabulary, pairs, glove_vectors
+    else:
+        return pairs
 
 
 def prepare_data(dataset, glove_file_path, small=True):
-    voc, pairs, word_vector = Read_data(dataset, glove_file_path, small, training=True)
+    if glove_file_path:
+        voc, pairs, word_vector = Read_data(dataset, glove_file_path, small, training=True)
+    else:
+        pairs = Read_data(dataset, glove_file_path, small, training=True)
     # Adding EOS in answers
     pairs = [[line[0], line[1]+' EOS'] for line in pairs]
     print(f'Read {len(pairs)} sentence pairs')
-    print('Counting words')
-    for pair in pairs:
-        voc.add_sentence(pair[0])
-        voc.add_sentence(pair[1])
-    
-    print('Counted words:')
-    print(f'In {voc.name}: {voc.n_words} words')
-    
-    return voc, pairs, word_vector
+    if glove_file_path:
+        print('Counting words')
+        for pair in pairs:
+            voc.add_sentence(pair[0])
+            voc.add_sentence(pair[1])
+        print('Counted words:')
+        print(f'In {voc.name}: {voc.n_words} words')
+        return voc, pairs, word_vector
+    else:
+        return pairs
 
 
 def prepare_data_model(dataset, glove_file_path, small=True):
-    voc, pairs, word_vector = Read_data(dataset, glove_file_path, small, training=False)
+    if glove_file_path:
+        voc, pairs, word_vector = Read_data(dataset, glove_file_path, small, training=False)
+    else:
+        pairs = Read_data(dataset, glove_file_path, small, training=False)
     # Adding EOS in answers
     pairs = [[line[0], line[1]+' EOS'] for line in pairs]
-    for pair in pairs:
-        voc.add_sentence(pair[0])
-        voc.add_sentence(pair[1])
-    
-    return voc, pairs, word_vector
+    if glove_file_path:
+        for pair in pairs:
+            voc.add_sentence(pair[0])
+            voc.add_sentence(pair[1])
+        return voc, pairs, word_vector
+    else:
+        return pairs
