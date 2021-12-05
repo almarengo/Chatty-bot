@@ -33,14 +33,14 @@ class Voc:
 
 
 
-def load_glove(file_path):
+def load_glove(file_path, small):
     idx = 4
     vectors = {}
     word2idx = {}
     with open(file_path, encoding='utf8') as lines:
         for line in lines:
             # Load only 10000 words if small is called
-            if  idx > 10000:
+            if  small and idx > 10000:
                 break
             # Split the line at the spaces and create a list where first is word and next is the word embedding vectors
             line = line.split()
@@ -137,7 +137,7 @@ def Read_data(dataset, glove_file_path, small, training=True):
                     pairs.append([inputLine, targetLine])
     # Load GloVe vectors
     try:
-        glove_vectors, glove_word2idx = load_glove(glove_file_path)
+        glove_vectors, glove_word2idx = load_glove(glove_file_path, small)
     except:
         glove_vectors = None
     # Initialize the classes questions and answers to assign indexes and count the words

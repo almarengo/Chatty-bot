@@ -77,7 +77,7 @@ def train(gpu, args):
 
     voc, train_pairs, vector = prepare_data('train', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
 
-    _, val_pairs, _ = prepare_data('validation', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
+    val_pairs= prepare_data('validation', glove_file_path=None, small=use_small)
 
     train_pairs = split_dataset(train_pairs, args.world_size, gpu)
     val_pairs = split_dataset(val_pairs, args.world_size, gpu)
