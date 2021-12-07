@@ -7,15 +7,16 @@ from model.utils.contractions import contractions
 
 class Voc:
     
-    def __init__(self, name, word2index):
+    def __init__(self, name):
         self.name = name
         # Create dict of word: 1 (count) for the words in the GloVe vocabulary
-        self.word_count = {word: 1 for word in word2index.keys()}
+        self.word_count = {'PAD': 1, 'SOS': 1, 'EOS': 1, 'UNK': 1}
         # Import the word: index created from load glove embbedding
-        self.word2index = word2index
-        self.n_words = len(word2index.keys())
+        self.word2index = {'PAD': 0, 'SOS': 1, 'EOS': 2, 'UNK': 3}
+        self.n_words = 4
         # Reverse index and words 
-        self.index2word = {v: k for k, v in word2index.items()}
+        self.index2word = {0: 'PAD', 1: 'SOS', 2: 'EOS', 3: 'UNK'}
+        
         
     
     def add_word(self, word):
@@ -33,10 +34,9 @@ class Voc:
 
 
 
-def load_glove(file_path, small):
-    idx = 4
+def load_glove(file_path, voc, small):
+    idx = 0
     vectors = {}
-    word2idx = {}
     with open(file_path, encoding='utf8') as lines:
         for line in lines:
             # Load only 10000 words if small is called
@@ -44,21 +44,19 @@ def load_glove(file_path, small):
                 break
             # Split the line at the spaces and create a list where first is word and next is the word embedding vectors
             line = line.split()
-            # Assign dict key to the word in the line and value an index 
-            word2idx[line[0].lower()] = idx
-            # Assign dict key to the word in the line and value a numpay array of the word (embedding from GloVe) 
-            vectors[line[0].lower()] = np.array(list(line[1:]), dtype='float')
-            idx += 1
+            # Assign dict key to the word in the line and value a numpay array of the word (embedding from GloVe)
+            try: 
+                vectors[voc.word2index[line[0].lower()]] = np.array(list(line[1:]), dtype='float')
+                idx += 1
+            except: 
+                continue
             embed_dim = len(list(line[1:]))
     vectors[0] = np.random.normal(scale=0.6, size=(embed_dim, ))
     vectors[1] = np.random.normal(scale=0.6, size=(embed_dim, ))
     vectors[2] = np.random.normal(scale=0.6, size=(embed_dim, ))
     vectors[3] = np.random.normal(scale=0.6, size=(embed_dim, ))
-    word2idx['PAD'] = 0
-    word2idx['SOS'] = 1
-    word2idx['EOS'] = 2
-    word2idx['UNK'] = 3
-    return vectors, word2idx
+
+    return vectors
 
 
 
@@ -111,7 +109,7 @@ def load_file(name, small, training):
         lines = open(f'../data/{name}.txt', "r")
         idx = 0
         for line in lines:
-            if idx > 5000:
+            if small and idx > 5000:
                 break
             data.append(line.strip()+' ')
             idx += 1
@@ -119,7 +117,7 @@ def load_file(name, small, training):
     return data
 
 
-def Read_data(dataset, glove_file_path, small, training=True):
+def Read_data(dataset, small, training=True, load_vocab=True):
     pairs = []
     if training:
         print(f'Reading {dataset} -------')
@@ -135,50 +133,46 @@ def Read_data(dataset, glove_file_path, small, training=True):
                     continue
                 else:
                     pairs.append([inputLine, targetLine])
-    # Load GloVe vectors
-    try:
-        glove_vectors, glove_word2idx = load_glove(glove_file_path, small)
-    except:
-        glove_vectors = None
+    
     # Initialize the classes questions and answers to assign indexes and count the words
-    if glove_vectors:
-        vocabulary = Voc('vocabulary', glove_word2idx)
-        return vocabulary, pairs, glove_vectors
+    if load_vocab:
+        vocabulary = Voc('vocabulary')
+        return vocabulary, pairs
     else:
         return pairs
+    
 
-
-def prepare_data(dataset, glove_file_path, small=True):
-    if glove_file_path:
-        voc, pairs, word_vector = Read_data(dataset, glove_file_path, small, training=True)
+def prepare_data(dataset, small=True, load_vocab=True):
+    if load_vocab:
+        voc, pairs = Read_data(dataset, small, training=True, load_vocab=True)
     else:
-        pairs = Read_data(dataset, glove_file_path, small, training=True)
+        pairs = Read_data(dataset, small, training=True, load_vocab=False)
     # Adding EOS in answers
     pairs = [[line[0], line[1]+' EOS'] for line in pairs]
     print(f'Read {len(pairs)} sentence pairs')
-    if glove_file_path:
+    if load_vocab:
         print('Counting words')
         for pair in pairs:
             voc.add_sentence(pair[0])
             voc.add_sentence(pair[1])
         print('Counted words:')
         print(f'In {voc.name}: {voc.n_words} words')
-        return voc, pairs, word_vector
+        return voc, pairs
     else:
         return pairs
 
 
-def prepare_data_model(dataset, glove_file_path, small=True):
-    if glove_file_path:
-        voc, pairs, word_vector = Read_data(dataset, glove_file_path, small, training=False)
+def prepare_data_model(dataset, small=True, load_vocab=True):
+    if load_vocab:
+        voc, pairs = Read_data(dataset, small, training=False, load_vocab=True)
     else:
-        pairs = Read_data(dataset, glove_file_path, small, training=False)
+        pairs = Read_data(dataset, small, training=False, load_vocab=False)
     # Adding EOS in answers
     pairs = [[line[0], line[1]+' EOS'] for line in pairs]
-    if glove_file_path:
+    if load_vocab:
         for pair in pairs:
             voc.add_sentence(pair[0])
             voc.add_sentence(pair[1])
-        return voc, pairs, word_vector
+        return voc, pairs
     else:
         return pairs

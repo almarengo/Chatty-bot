@@ -1,7 +1,7 @@
 import os
 import datetime
 import argparse
-from model.utils.load_utils import prepare_data
+from model.utils.load_utils import prepare_data, load_glove
 from model.utils.train_utils import *
 from model.seq2seq_model import *
 from model.utils.Calculate_BLEU import *
@@ -78,24 +78,19 @@ def train_plot(gpu, args):
             print('Using general attention', flush=True)
     
 
-    voc, train_pairs, vector = prepare_data('train', 'glove.42B.300d/glove.42B.300d.txt', small=use_small)
+    voc, train_pairs = prepare_data('train', small=use_small)
 
-    val_pairs= prepare_data('validation', glove_file_path=None, small=use_small)
+    val_pairs= prepare_data('validation', small=use_small, load_vocab=False)
 
     train_pairs = split_dataset(train_pairs, args.world_size, gpu)
     val_pairs = split_dataset(val_pairs, args.world_size, gpu)
 
-    matrix_len = voc.n_words
-    weights_matrix = np.zeros((matrix_len, N_word))
+    print(f'Training pairs {len(train_pairs)} on GPU {gpu}')
     
-    for i, word in enumerate(voc.word2index):
-        try:
-            weights_matrix[i] = vector[word]
-        except KeyError:
-            weights_matrix[i] = np.random.normal(scale=0.6, size=(N_word, ))
+    word_embed = load_glove('glove/glove.6B.300d.txt', voc, small=use_small)
     
     # Initiate the model
-    model = Seq2Seq(batch_size, voc.n_words, N_word, hidden_size, weights_matrix, dropout, att)
+    model = Seq2Seq(batch_size, voc.n_words, N_word, hidden_size, word_embed, dropout, att)
 
     if args.pre_trained:
         if gpu == 0:
@@ -160,7 +155,7 @@ def train_plot(gpu, args):
         loss = epoch_train(model, optimizer, batch_size, train_pairs, voc, gpu)
 
         # Gather and average the loss
-        dist.all_reduce(loss, op=dist.ReduceOp.SUM)
+        dist.all_reduce(loss, op=dist.ReduceOp.SUM, async_op=True).wait()
 
         if gpu == 0:
             print(f'Loss: {loss/args.world_size}', flush=True)
@@ -170,8 +165,8 @@ def train_plot(gpu, args):
         val_accuracy = epoch_accuray(model, batch_size, val_pairs, voc, gpu)
 
         # Gather and average accuracies
-        dist.all_reduce(train_accuracy, op=dist.ReduceOp.SUM)
-        dist.all_reduce(val_accuracy, op=dist.ReduceOp.SUM)
+        dist.all_reduce(train_accuracy, op=dist.ReduceOp.SUM, async_op=True).wait()
+        dist.all_reduce(val_accuracy, op=dist.ReduceOp.SUM, async_op=True).wait()
 
         if gpu == 0:
             print(f'Train accuracy: {train_accuracy.item()/args.world_size}', flush=True)
@@ -181,7 +176,7 @@ def train_plot(gpu, args):
             # Calculate BLEU Score
             BLEU_model = CalculateBleu(model, batch_size, train_pairs, voc, gpu)
             bleu_score = BLEU_model.score()
-            dist.all_reduce(bleu_score, op=dist.ReduceOp.SUM)
+            dist.all_reduce(bleu_score, op=dist.ReduceOp.SUM, async_op=True).wait()
             if gpu == 0:
                 print(f'BLUE score: {bleu_score.item()/args.world_size}', flush=True)
 

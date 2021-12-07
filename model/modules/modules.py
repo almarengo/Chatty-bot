@@ -3,19 +3,38 @@ from torch import nn
 import torch.nn.functional as F
 from model.utils.net_utils import * 
 
+class WordEmbedding(nn.Module):
+    
+    def __init__(self, embedding_dim, word_embed):
+        super(WordEmbedding, self).__init__()
+
+        self.embedding_dim = embedding_dim
+        self.word_embed = word_embed
+        self.UNK_token = 3
+    
+    
+    def forward(self, input):
+        B = input.size()[0]
+        T = input.size()[1]
+        embedded = torch.zeros((input.unsqueeze(-1).expand(-1, -1, self.embedding_dim).size()), dtype=torch.float)
+        for i in range(B):
+            for t in range(T):
+                try:
+                    embedded[i, t, :] = torch.tensor(self.word_embed[input[i, t]], dtype=torch.float)
+                except:
+                    embedded[i, t, :] = torch.tensor(self.word_embed[self.UNK_token], dtype=torch.float)
+        return embedded
+
+
 class Encoder(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout):
+    def __init__(self, batch_size, embedding_dim, hidden_size, dropout):
         
         super(Encoder, self).__init__()
         
         self.batch_size = batch_size
         self.hidden_size = hidden_size
-        self.embedding_dim = embedding_dim
-        self.embedding = nn.Embedding(vocabolary_size, embedding_dim)
-        weights_matrix = torch.tensor(weights_matrix)
-        self.embedding.load_state_dict({'weight': weights_matrix})
-        self.embedding.weight.requires_grad = True
+    
         self.gru = nn.GRU(embedding_dim, hidden_size, dropout=dropout, batch_first=True)
         self.x = torch.empty(10, dtype=torch.long)
         self.y = torch.empty(10, dtype=torch.long)
@@ -24,7 +43,7 @@ class Encoder(nn.Module):
     def forward(self, input, enc_len, hidden=None):
         
         # Takes input size (B x T x 1) and embed to (B x T x H_emb)
-        embedded = self.embedding(input)
+        embedded = input
         if embedded.size()[0] == 1:
             output, hidden = self.gru(embedded)
         else:

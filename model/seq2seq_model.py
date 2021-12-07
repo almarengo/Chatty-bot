@@ -7,11 +7,12 @@ from model.utils.net_utils import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout, method):
+    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, word_embed, dropout, method):
         
         super(Seq2Seq, self).__init__()
         
-        self.encoder = Encoder(batch_size, vocabolary_size, embedding_dim, hidden_size, weights_matrix, dropout)
+        self.embedding_layer = WordEmbedding(embedding_dim, word_embed)
+        self.encoder = Encoder(batch_size,  embedding_dim, hidden_size, dropout)
         self.decoder = Decoder(embedding_dim, hidden_size, vocabolary_size, dropout, method)
         self.output_size = vocabolary_size
         self.softmax = nn.Softmax(dim=1)
@@ -31,8 +32,8 @@ class Seq2Seq(nn.Module):
         #decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
         decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size)).to(src.device)
         #decoder_outputs = self.decoder_outputs.new_tensor(np.zeros((batch_size, dec_len, self.output_size)))
-        
-        encoder_outputs, encoder_hidden = self.encoder(src, enc_length)
+        embedded = self.embedding_layer(src).to(src.device)
+        encoder_outputs, encoder_hidden = self.encoder(embedded, enc_length)
         
         #decoder_input = torch.tensor([batch_size*[self.SOS_token]], device = self.device)
         decoder_input = torch.tensor([batch_size*[self.SOS_token]]).to(src.device)
@@ -77,7 +78,6 @@ class Seq2Seq(nn.Module):
             loss += lossi
             n_totals += nTotal
             print_losses.append(lossi.item()*nTotal)
-
         return loss, sum(print_losses)/n_totals
 
 
@@ -108,8 +108,8 @@ class Seq2Seq(nn.Module):
             #decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size), device=self.device)
             decoder_outputs = torch.zeros((batch_size, dec_len, self.output_size)).to(src.device)
             #decoder_outputs = self.decoder_outputs.new_tensor(np.zeros((batch_size, dec_len, self.output_size)))
-        
-        encoder_outputs, encoder_hidden = self.encoder(src, enc_len)
+        embedded = self.embedding_layer(src).to(src.device)
+        encoder_outputs, encoder_hidden = self.encoder(embedded, enc_len)
         
         #decoder_input = torch.tensor([batch_size*[self.SOS_token]], device = self.device)
         decoder_input = torch.tensor([batch_size*[self.SOS_token]]).to(src.device)
