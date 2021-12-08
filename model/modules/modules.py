@@ -20,9 +20,9 @@ class WordEmbedding(nn.Module):
         for i in range(B):
             for t in range(T):
                 try:
-                    embedded[i, t, :] = torch.tensor(self.word_embed[input[i, t]], dtype=torch.float)
+                    embedded[i, t, :] = torch.tensor(self.word_embed[input[i, t].item()], dtype=torch.float)
                 except:
-                    embedded[i, t, :] = torch.tensor(self.word_embed[self.UNK_token], dtype=torch.float)
+                    embedded[i, t, :] = torch.tensor(np.random.normal(scale=0.6, size=(self.embedding_dim, )), dtype=torch.float)
         return embedded
 
 
