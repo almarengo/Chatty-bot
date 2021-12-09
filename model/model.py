@@ -13,4 +13,4 @@ class Model(Seq2Seq):
         
         self.voc = voc
 
-        Seq2Seq.__init__(self, 64, voc.n_words, 300, 100, word_embed, 0.2, 'concat')
+        Seq2Seq.__init__(self, 64, voc.n_words, 300, 100, word_embed, 0.2, 'concat', True)
