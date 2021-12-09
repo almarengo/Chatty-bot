@@ -5,24 +5,34 @@ from model.utils.net_utils import *
 
 class WordEmbedding(nn.Module):
     
-    def __init__(self, embedding_dim, word_embed):
+    def __init__(self, embedding_dim, word_embed, trainable):
         super(WordEmbedding, self).__init__()
 
+        self.trainable = trainable
         self.embedding_dim = embedding_dim
-        self.word_embed = word_embed
         self.UNK_token = 3
+        if self.trainable:
+            w2i = word_embed.keys()
+            word_embed_val = list(word_embed.values())
+            vocabulary_size = len(w2i)
+            self.embedding = nn.Embedding(vocabulary_size, embedding_dim)
+            weights_matrix = torch.tensor(word_embed_val, dtype=torch.float)
+            self.embedding.load_state_dict({'weight': weights_matrix})
+            self.embedding.weight.requires_grad = True
+        else:
+            self.word_embed = word_embed
     
     
     def forward(self, input):
-        B = input.size()[0]
-        T = input.size()[1]
-        embedded = torch.zeros((input.unsqueeze(-1).expand(-1, -1, self.embedding_dim).size()), dtype=torch.float)
-        for i in range(B):
-            for t in range(T):
-                try:
+        if self.trainable:
+            embedded = self.embedding(input)
+        else:
+            B = input.size()[0]
+            T = input.size()[1]
+            embedded = torch.zeros((input.unsqueeze(-1).expand(-1, -1, self.embedding_dim).size()), dtype=torch.float)
+            for i in range(B):
+                for t in range(T):
                     embedded[i, t, :] = torch.tensor(self.word_embed[input[i, t].item()], dtype=torch.float)
-                except:
-                    embedded[i, t, :] = torch.tensor(np.random.normal(scale=0.6, size=(self.embedding_dim, )), dtype=torch.float)
         return embedded
 
 

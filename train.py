@@ -73,8 +73,16 @@ def train(gpu, args):
         att = 'general'
         if gpu == 0:
             print('Using general attention', flush=True)
-    
 
+    if args.trainable:
+        trainable=True
+        if gpu==0:
+            print('Using trainable embaddings', flush=True)
+    else:
+        trainable=False
+        if gpu==0:
+            print('Using pre-trained embeddings', flush=True)
+    
     voc, train_pairs = prepare_data('train', small=use_small)
 
     val_pairs= prepare_data('validation', small=use_small, load_vocab=False)
@@ -87,7 +95,7 @@ def train(gpu, args):
     word_embed = load_glove('glove/glove.6B.300d.txt', voc, small=use_small)
 
     # Initiate the model
-    model = Seq2Seq(batch_size, voc.n_words, N_word, hidden_size, word_embed, dropout, att)
+    model = Seq2Seq(batch_size, voc.n_words, N_word, hidden_size, word_embed, dropout, att, trainable)
 
     if args.pre_trained:
         if gpu == 0:

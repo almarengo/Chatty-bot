@@ -30,6 +30,8 @@ def main():
             help='If set, apply SGD optimizer.')
     parser.add_argument('--plot', action='store_true', 
             help='If set, show plots.')
+    parser.add_argument('--trainable', action='store_true', 
+            help='If set, uses trainable embeddings.')
     args = parser.parse_args()
 
 

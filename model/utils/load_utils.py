@@ -35,28 +35,31 @@ class Voc:
 
 
 def load_glove(file_path, voc, small):
-    idx = 0
     vectors = {}
     with open(file_path, encoding='utf8') as lines:
-        for line in lines:
+        for idx, line in enumerate(lines):
             # Load only 10000 words if small is called
             if  small and idx > 10000:
                 break
             # Split the line at the spaces and create a list where first is word and next is the word embedding vectors
             line = line.split()
             # Assign dict key to the word in the line and value a numpay array of the word (embedding from GloVe)
-            try: 
-                vectors[voc.word2index[line[0].lower()]] = np.array(list(line[1:]), dtype='float')
-                idx += 1
-            except: 
-                continue
+            if line[0].lower() not in vectors: 
+                vectors[line[0].lower()] = np.array(list(line[1:]), dtype='float') 
+            #vectors[voc.word2index[line[0].lower()]] = np.random.normal(scale=0.6, size=(embed_dim, ))
             embed_dim = len(list(line[1:]))
-    vectors[0] = np.random.normal(scale=0.6, size=(embed_dim, ))
-    vectors[1] = np.random.normal(scale=0.6, size=(embed_dim, ))
-    vectors[2] = np.random.normal(scale=0.6, size=(embed_dim, ))
-    vectors[3] = np.random.normal(scale=0.6, size=(embed_dim, ))
 
-    return vectors
+    word_embed = {}
+    for word, idx in voc.word2index.items():
+        try:
+            word_embed[idx] = vectors[word]
+        except:
+            word_embed[idx] = np.random.normal(scale=0.6, size=(embed_dim, ))
+    #word_embed[0] = np.random.normal(scale=0.6, size=(embed_dim, ))
+    #word_embed[1] = np.random.normal(scale=0.6, size=(embed_dim, ))
+    #word_embed[2] = np.random.normal(scale=0.6, size=(embed_dim, ))
+    #word_embed[3] = np.random.normal(scale=0.6, size=(embed_dim, ))
+    return word_embed
 
 
 

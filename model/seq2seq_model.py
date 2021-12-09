@@ -7,11 +7,11 @@ from model.utils.net_utils import *
 
 class Seq2Seq(nn.Module):
     
-    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, word_embed, dropout, method):
+    def __init__(self, batch_size, vocabolary_size, embedding_dim, hidden_size, word_embed, dropout, method, trainable):
         
         super(Seq2Seq, self).__init__()
         
-        self.embedding_layer = WordEmbedding(embedding_dim, word_embed)
+        self.embedding_layer = WordEmbedding(embedding_dim, word_embed, trainable)
         self.encoder = Encoder(batch_size,  embedding_dim, hidden_size, dropout)
         self.decoder = Decoder(embedding_dim, hidden_size, vocabolary_size, dropout, method)
         self.output_size = vocabolary_size
