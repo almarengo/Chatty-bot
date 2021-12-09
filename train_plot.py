@@ -80,7 +80,7 @@ def train_plot(gpu, args):
     if args.trainable:
         trainable=True
         if gpu==0:
-            print('Using trainable embaddings', flush=True)
+            print('Using trainable embeddings', flush=True)
     else:
         trainable=False
         if gpu==0:
