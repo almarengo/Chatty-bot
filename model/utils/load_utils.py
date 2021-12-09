@@ -99,7 +99,7 @@ def sentence_cleaning(sentence):
 def load_file(name, small, training):
     if training:
         data = []
-        lines = open(f'data/{name}.txt', "r")
+        lines = open(f'data/{name}.txt', mode="r", encoding="cp1252")
         idx = 0
         for line in lines:
             if small and idx > 5000:
@@ -109,7 +109,7 @@ def load_file(name, small, training):
         lines.close()
     else:
         data = []
-        lines = open(f'../data/{name}.txt', "r")
+        lines = open(f'../data/{name}.txt', mode="r", encoding="cp1252")
         idx = 0
         for line in lines:
             if small and idx > 5000:
