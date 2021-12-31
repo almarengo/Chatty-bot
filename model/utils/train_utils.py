@@ -27,7 +27,7 @@ def epoch_train(model, optimizer, batch_size, pairs, voc, gpu):
         # Calculate outputs and loss
             output_values = model(encoder_in, decoder_in, enc_length, seq_length)
         
-            loss, print_loss = model.loss(output_values, decoder_in, mask, gpu)
+            loss = model.loss(output_values, decoder_in, mask, gpu)
 
         # Clear gradients (pytorch accumulates gradients by default)
         optimizer.zero_grad() 
@@ -40,11 +40,11 @@ def epoch_train(model, optimizer, batch_size, pairs, voc, gpu):
 
         optimizer.step()
 
-        cum_loss += print_loss*(ed - st)
+        cum_loss += loss*(ed - st)
 
         st = ed
 
-    return torch.tensor(cum_loss/n_records).type_as(output_values)
+    return cum_loss/n_records
 
 
 

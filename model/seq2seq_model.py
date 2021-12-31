@@ -64,8 +64,6 @@ class Seq2Seq(nn.Module):
 
 
     def loss(self, decoder_outputs, trg, mask, gpu):
-
-        print_losses = []
         n_totals = 0
         dec_len = trg.size()[1]
         loss = 0
@@ -75,10 +73,9 @@ class Seq2Seq(nn.Module):
             crossEntropy = -torch.log(torch.gather(decoder_outputs[:, idx, :], 1, trg[:, idx].view(-1, 1)).squeeze(1)).cuda(gpu)
             
             lossi = crossEntropy.masked_select(mask[:, idx].view(-1, 1)).mean()
-            loss += lossi
+            loss += lossi*nTotal
             n_totals += nTotal
-            print_losses.append(lossi.item()*nTotal)
-        return loss, sum(print_losses)/n_totals
+        return loss/n_totals
 
 
     def check_acc(self, predictions, true_seq):
