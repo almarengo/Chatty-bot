@@ -23,11 +23,11 @@ def epoch_train(model, optimizer, batch_size, pairs, voc, gpu):
         ed = st + batch_size if (st + batch_size) < n_records else n_records
     
         encoder_in, decoder_in, enc_length, seq_length, mask = to_batch_sequence(pairs, voc, st, ed, perm, gpu)
-       
+        with torch.cuda.amp.autocast():
         # Calculate outputs and loss
-        output_values = model(encoder_in, decoder_in, enc_length, seq_length)
+            output_values = model(encoder_in, decoder_in, enc_length, seq_length)
         
-        loss, print_loss = model.loss(output_values, decoder_in, mask, gpu)
+            loss, print_loss = model.loss(output_values, decoder_in, mask, gpu)
 
         # Clear gradients (pytorch accumulates gradients by default)
         optimizer.zero_grad() 
