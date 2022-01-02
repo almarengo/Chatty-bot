@@ -93,9 +93,9 @@ def sentence_cleaning(sentence):
     sentence = re.sub('\s{2,}', ' ', sentence)
     # Get rid of non-letter character
     sentence = re.sub(r"[^a-zA-Z0-9.!?']+", r" ", sentence)
-    # Trim sentences shorter than 15 words
-    if len(sentence.split()) > 15:
-        sentence = ' '.join(sentence.split()[:15])
+    # Trim sentences shorter than 25 words
+    if len(sentence.split()) > 25:
+        sentence = ' '.join(sentence.split()[:25])
     return sentence
 
 
