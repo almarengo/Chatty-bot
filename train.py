@@ -142,24 +142,24 @@ def train(gpu, args):
 
         # Calculate accuracy
         train_accuracy = epoch_accuray(model, batch_size, train_pairs, voc, gpu)
-        val_accuracy = epoch_accuray(model, batch_size, val_pairs, voc, gpu)
+        #val_accuracy = epoch_accuray(model, batch_size, val_pairs, voc, gpu)
+
+        # Calculate BLEU Score on validation
+        BLEU_model = CalculateBleu(model, batch_size, val_pairs, voc, gpu)
+        bleu_score = BLEU_model.score()
+
 
         # Gather and average accuracies
         dist.all_reduce(train_accuracy, op=dist.ReduceOp.SUM, async_op=True).wait()
-        dist.all_reduce(val_accuracy, op=dist.ReduceOp.SUM, async_op=True).wait()
+        #dist.all_reduce(val_accuracy, op=dist.ReduceOp.SUM, async_op=True).wait()
+        dist.all_reduce(bleu_score, op=dist.ReduceOp.SUM, async_op=True).wait()
 
         if gpu == 0:
             print(f'Train accuracy: {train_accuracy.item()/args.world_size}', flush=True)
-            print(f'Validation accuracy: {val_accuracy.item()/args.world_size}', flush=True)
+            #print(f'Validation accuracy: {val_accuracy.item()/args.world_size}', flush=True)
+            print(f'BLUE score validation: {bleu_score.item()/args.world_size}', flush=True)
 
-        if epoch % 100 == 0:
-            # Calculate BLEU Score
-            BLEU_model = CalculateBleu(model, batch_size, train_pairs, voc, gpu)
-            bleu_score = BLEU_model.score()
-            dist.all_reduce(bleu_score, op=dist.ReduceOp.SUM, async_op=True).wait()
-            if gpu == 0:
-                print(f'BLUE score: {bleu_score.item()/args.world_size}', flush=True)
-
+        if epoch % 50 == 0:
             if gpu == 0:
                 # Save model
                 torch.save(model.state_dict(), f'saved_model/seq2seq_{epoch}_{att}')

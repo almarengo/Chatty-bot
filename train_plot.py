@@ -141,7 +141,7 @@ def train_plot(gpu, args):
 
         line1, = ax1.plot(xdata, ydata1, color='red')
         line2, = ax2.plot(xdata, ydata2, color='blue', label='Train Accuracy')
-        line3, = ax2.plot(xdata, ydata3, color='orange', label='Val Accuracy')
+        line3, = ax2.plot(xdata, ydata3, color='orange', label='BLEU score validation')
         ax2.set_xlabel('Epoch')
         ax1.set_ylabel('Loss')
         ax2.set_ylabel('Accuracy')
@@ -170,24 +170,24 @@ def train_plot(gpu, args):
 
         # Calculate accuracy
         train_accuracy = epoch_accuray(model, batch_size, train_pairs, voc, gpu)
-        val_accuracy = epoch_accuray(model, batch_size, val_pairs, voc, gpu)
+        #val_accuracy = epoch_accuray(model, batch_size, val_pairs, voc, gpu)
+
+        # Calculate BLEU Score on validation
+        BLEU_model = CalculateBleu(model, batch_size, val_pairs, voc, gpu)
+        bleu_score = BLEU_model.score()
+
 
         # Gather and average accuracies
         dist.all_reduce(train_accuracy, op=dist.ReduceOp.SUM, async_op=True).wait()
-        dist.all_reduce(val_accuracy, op=dist.ReduceOp.SUM, async_op=True).wait()
+        #dist.all_reduce(val_accuracy, op=dist.ReduceOp.SUM, async_op=True).wait()
+        dist.all_reduce(bleu_score, op=dist.ReduceOp.SUM, async_op=True).wait()
 
         if gpu == 0:
             print(f'Train accuracy: {train_accuracy.item()/args.world_size}', flush=True)
-            print(f'Validation accuracy: {val_accuracy.item()/args.world_size}', flush=True)
+            #print(f'Validation accuracy: {val_accuracy.item()/args.world_size}', flush=True)
+            print(f'BLUE score validation: {bleu_score.item()/args.world_size}', flush=True)
 
-        if epoch % 100 == 0:
-            # Calculate BLEU Score
-            BLEU_model = CalculateBleu(model, batch_size, train_pairs, voc, gpu)
-            bleu_score = BLEU_model.score()
-            dist.all_reduce(bleu_score, op=dist.ReduceOp.SUM, async_op=True).wait()
-            if gpu == 0:
-                print(f'BLUE score: {bleu_score.item()/args.world_size}', flush=True)
-
+        if epoch % 50 == 0:
             if gpu == 0:
                 # Save model
                 torch.save(model.state_dict(), f'saved_model/seq2seq_{epoch}_{att}')
@@ -195,20 +195,20 @@ def train_plot(gpu, args):
         if gpu == 0:
             loss= loss.item()/args.world_size
             train_accuracy = train_accuracy.item()/args.world_size
-            val_accuracy = val_accuracy.item()/args.world_size
+            bleu_score = bleu_score.item()/args.world_size
 
             # Plot model
             if loss > max_plot1:
                 max_plot1 = np.ceil(loss)
             if train_accuracy > max_plot2:
                 max_plot2 = np.round(train_accuracy+0.05, decimals=1)
-            if val_accuracy > max_plot2:
-                max_plot2 = np.round(val_accuracy+0.05, decimals=1)
+            if bleu_score > max_plot2:
+                max_plot2 = np.round(bleu_score+0.05, decimals=1)
         
             xdata.append(epoch)
             ydata1.append(loss)
             ydata2.append(train_accuracy)
-            ydata3.append(val_accuracy)
+            ydata3.append(bleu_score)
             line1.set_xdata(xdata)
             line1.set_ydata(ydata1)
             line2.set_xdata(xdata)
