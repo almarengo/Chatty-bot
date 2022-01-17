@@ -10,7 +10,7 @@ import torch
 
 device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 model = Model()
-model.load_state_dict(torch.load('../saved_model/seq2seq_500_concat', map_location=torch.device(device)))
+model.load_state_dict(torch.load('../pre-trained/seq2seq_model', map_location=torch.device(device)))
 model.eval()
 
 from chat import get_response

@@ -1,6 +1,11 @@
 import torch
+import sys
+sys.path.insert(1, '../')
+
+from model.utils.load_utils import *
 
 def encode(model, question):
+    question = sentence_cleaning(question)
     q_list = question.lower().split()
     length = len(q_list)
     tensor_len = torch.tensor(length)
